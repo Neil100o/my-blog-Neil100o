@@ -6,7 +6,7 @@
   var textarea = document.getElementById('comment-textarea');
   if (!container || !textarea) return;
 
-  function makeSection(title, items) {
+    function makeSection(title, items) {
     var div = document.createElement('div');
     div.style.marginBottom = '0.6rem';
     var small = document.createElement('small');
@@ -23,13 +23,16 @@
       var btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'emoji-btn';
-      btn.style.padding = '0.2rem 0.4rem';
+      btn.style.padding = '0.3rem 0.5rem';
       btn.style.background = 'white';
       btn.style.border = '1px solid #e0e0e0';
       btn.style.borderRadius = '4px';
       btn.style.cursor = 'pointer';
-      btn.style.fontSize = title === 'Emoji' ? '1.2rem' : '0.85rem';
+      btn.style.fontSize = title === 'Emoji' ? '1.2rem' : '1rem';
       btn.style.whiteSpace = 'nowrap';
+      btn.style.fontFamily = '"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Noto Sans SC", sans-serif';
+      btn.style.minWidth = '2.5rem';
+      btn.style.minHeight = '2rem';
       btn.textContent = items[i];
       wrap.appendChild(btn);
     }
