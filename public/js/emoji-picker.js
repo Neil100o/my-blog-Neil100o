@@ -6,7 +6,7 @@
   var textarea = document.getElementById('comment-textarea');
   if (!container || !textarea) return;
 
-    function makeSection(title, items) {
+  function makeSection(title, items) {
     var div = document.createElement('div');
     div.style.marginBottom = '0.6rem';
     var small = document.createElement('small');
@@ -24,16 +24,29 @@
       btn.type = 'button';
       btn.className = 'emoji-btn';
       btn.style.padding = '0.3rem 0.5rem';
-      btn.style.background = 'white';
-      btn.style.border = '1px solid #e0e0e0';
+      btn.style.background = '#fff';
+      btn.style.border = '1.5px solid #000';
       btn.style.borderRadius = '4px';
       btn.style.cursor = 'pointer';
-      btn.style.fontSize = title === 'Emoji' ? '1.2rem' : '1rem';
+      btn.style.fontSize = title === 'Emoji' ? '1.2rem' : '0.9rem';
       btn.style.whiteSpace = 'nowrap';
       btn.style.fontFamily = '"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Noto Sans SC", sans-serif';
       btn.style.minWidth = '2.5rem';
       btn.style.minHeight = '2rem';
+      btn.style.color = '#000';
+      btn.style.fontWeight = '600';
       btn.textContent = items[i];
+      // hover 效果用 JS 事件（避免外部 CSS 依赖）
+      btn.onmouseenter = function() {
+        this.style.background = '#cc0000';
+        this.style.color = '#fff';
+        this.style.borderColor = '#cc0000';
+      };
+      btn.onmouseleave = function() {
+        this.style.background = '#fff';
+        this.style.color = '#000';
+        this.style.borderColor = '#000';
+      };
       wrap.appendChild(btn);
     }
     div.appendChild(wrap);
