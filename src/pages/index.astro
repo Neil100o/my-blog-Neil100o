@@ -13,19 +13,45 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 	<body>
 		<Header />
 		<main>
+		</* Hero 背景图区域 */>
+  <div class="hero" style="
+    position: relative;
+    width: 100%;
+    height: 60vh;
+    min-height: 400px;
+    background: url('/bg.png') center/cover no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: -2rem -1rem 3rem;
+    padding: 0 1rem;
+  ">
+    <div style="
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+    "></div>
+    <div style="position: relative; z-index: 1; text-align: center; color: #fff;">
+      <h1 style="
+        font-size: 3rem;
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        margin: 0 0 0.5rem;
+        text-shadow: 2px 2px 0 #cc0000;
+        border-bottom: none;
+      ">MOSKAVIS</h1>
+    </div>
+  </div>
+
 			<h1>泥嚎！(*´▽｀)ノノ</h1>
 			<p>
 				这是我的博客，作为初学者暂时还不太会写这些什么前端后端，所以可能比较简陋（。还请多多包涵
 			</p>
 			<p>
 				这个博客主要用来放一些我自己以前写的文字和现在的一些想法，也有可能用来放照片，反正这里是我的地盘，所以会做很多事情
-			<p>Here are a few ideas on how to get started with the template:</p>
+			<p>那么，这是我！</p>
 			<ul>
-				<li>Edit this page in <code>src/pages/index.astro</code></li>
-				<li>Edit the site header items in <code>src/components/Header.astro</code></li>
-				<li>Add your name to the footer in <code>src/components/Footer.astro</code></li>
-				<li>Check out the included blog posts in <code>src/content/blog/</code></li>
-				<li>Customize the blog post page layout in <code>src/layouts/BlogPost.astro</code></li>
+				看起来胆子大但是其实胆子很小，一定要做选择的话会选择相信别人，喜欢交朋友，喜欢可爱的人，朋友评价说还挺好相处（？）
 			</ul>
 			<p>
 				就这样，接下来我也不知道写什么了，所以开始你的探索吧（有什么可以探索的吗？）！
