@@ -1,8 +1,8 @@
 ---
-import BaseLayout from '../layouts/BlogPost.astro';
+import Layout from '../layouts/Layout.astro';
 ---
 
-<BaseLayout title="写作后台">
+<Layout title="写作后台">
   <main style="max-width: 800px; margin: 0 auto; padding: 2rem 1rem;">
     <h1 style="border-bottom: 3px solid #000; padding-bottom: 0.5rem; margin-bottom: 2rem;">✎ 写作后台</h1>
     
@@ -33,6 +33,17 @@ import BaseLayout from '../layouts/BlogPost.astro';
           <input type="text" id="tags" placeholder="随笔, 技术, 生活" style="width: 100%; padding: 0.7rem; border: 2px solid #000;" />
         </div>
       </div>
+
+      <div>
+        <label style="display: block; font-weight: 800; margin-bottom: 0.4rem; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.05em;">图片</label>
+        <input type="file" id="image-input" accept="image/*" multiple style="display: none;" />
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <button type="button" id="upload-btn" style="padding: 0.5rem 1rem; background: #000; color: #fff; border: 2px solid #000; font-weight: 700; cursor: pointer;">📎 选择图片</button>
+          <span id="upload-status" style="color: #666; font-size: 0.9rem; align-self: center;"></span>
+        </div>
+        <div id="image-preview" style="display: flex; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap;"></div>
+        <small style="color: #666;">支持多选，自动压缩并插入 Markdown，单张建议不超过 10MB</small>
+      </div>
       
       <div>
         <label style="display: block; font-weight: 800; margin-bottom: 0.4rem; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.05em;">内容（Markdown）</label>
@@ -52,31 +63,32 @@ import BaseLayout from '../layouts/BlogPost.astro';
     
     <div id="status" style="margin-top: 1.5rem; padding: 1.2rem; display: none; border: 2px solid #000;"></div>
   </main>
-</BaseLayout>
+</Layout>
 
 <script is:inline>
   document.getElementById('date').valueAsDate = new Date();
   
-  const textarea = document.getElementById('content');
+  var textarea = document.getElementById('content');
+  var pwdInput = document.getElementById('admin-pwd');
   
   // Tab 键支持
-  textarea.addEventListener('keydown', (e) => {
+  textarea.addEventListener('keydown', function(e) {
     if (e.key === 'Tab') {
       e.preventDefault();
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
+      var start = textarea.selectionStart;
+      var end = textarea.selectionEnd;
       textarea.value = textarea.value.substring(0, start) + '  ' + textarea.value.substring(end);
       textarea.selectionStart = textarea.selectionEnd = start + 2;
     }
   });
   
   // 预览
-  document.getElementById('preview-btn').addEventListener('click', () => {
-    const content = textarea.value;
-    const preview = document.getElementById('preview');
-    const previewContent = document.getElementById('preview-content');
+  document.getElementById('preview-btn').addEventListener('click', function() {
+    var content = textarea.value;
+    var preview = document.getElementById('preview');
+    var previewContent = document.getElementById('preview-content');
     
-    let html = content
+    var html = content
       .replace(/^### (.*$)/gim, '<h3>$1</h3>')
       .replace(/^## (.*$)/gim, '<h2>$1</h2>')
       .replace(/^# (.*$)/gim, '<h1>$1</h1>')
@@ -100,18 +112,125 @@ import BaseLayout from '../layouts/BlogPost.astro';
       .replace(/\s+/g, '-')
       .substring(0, 50);
   }
+
+  // 图片压缩工具
+  function compressImage(file, maxWidth, maxHeight, quality) {
+    return new Promise(function(resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var img = new Image();
+        img.onload = function() {
+          var canvas = document.createElement('canvas');
+          var ctx = canvas.getContext('2d');
+          var w = img.width;
+          var h = img.height;
+          if (w > h) {
+            if (w > maxWidth) { h = Math.round(h * maxWidth / w); w = maxWidth; }
+          } else {
+            if (h > maxHeight) { w = Math.round(w * maxHeight / h); h = maxHeight; }
+          }
+          canvas.width = w;
+          canvas.height = h;
+          ctx.drawImage(img, 0, 0, w, h);
+          var dataUrl = canvas.toDataURL('image/jpeg', quality);
+          resolve(dataUrl.split(',')[1]);
+        };
+        img.onerror = reject;
+        img.src = e.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // 图片上传
+  var imageInput = document.getElementById('image-input');
+  var uploadBtn = document.getElementById('upload-btn');
+  var uploadStatus = document.getElementById('upload-status');
+  var imagePreview = document.getElementById('image-preview');
+
+  uploadBtn.addEventListener('click', function() {
+    imageInput.click();
+  });
+
+  imageInput.addEventListener('change', async function() {
+    var files = imageInput.files;
+    if (!files.length) return;
+    if (!pwdInput.value) {
+      alert('先填写发布密码');
+      return;
+    }
+
+    uploadStatus.textContent = '准备处理 ' + files.length + ' 张图片...';
+    uploadBtn.disabled = true;
+
+    for (var i = 0; i < files.length; i++) {
+      var file = files[i];
+      if (!file.type.startsWith('image/')) {
+        alert(file.name + ' 不是图片，跳过');
+        continue;
+      }
+
+      uploadStatus.textContent = '正在压缩: ' + file.name + ' (' + Math.round(file.size/1024/1024*10)/10 + 'MB)';
+
+      try {
+        var base64 = await compressImage(file, 1920, 1920, 0.8);
+        var compressedSize = Math.round(base64.length * 0.75 / 1024);
+
+        uploadStatus.textContent = '上传中: ' + file.name + ' (约 ' + compressedSize + 'KB)';
+
+        var res = await fetch('/api/upload-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            filename: file.name.replace(/\.[^/.]+$/, '') + '.jpg',
+            content: base64,
+            password: pwdInput.value
+          })
+        });
+
+        var data = await res.json();
+        if (!data.success) {
+          alert(file.name + ' 上传失败: ' + data.error);
+          continue;
+        }
+
+        var md = '\n![' + file.name + '](' + data.url + ')\n';
+        var start = textarea.selectionStart;
+        var end = textarea.selectionEnd;
+        textarea.value = textarea.value.slice(0, start) + md + textarea.value.slice(end);
+        textarea.focus();
+        textarea.setSelectionRange(start + md.length, start + md.length);
+
+        var thumb = document.createElement('div');
+        thumb.style.width = '80px';
+        thumb.style.height = '80px';
+        thumb.style.background = 'url(' + data.url + ') center/cover';
+        thumb.style.border = '2px solid #000';
+        thumb.title = data.name;
+        imagePreview.appendChild(thumb);
+
+      } catch (err) {
+        alert(file.name + ' 压缩/上传错误: ' + err.message);
+      }
+    }
+
+    uploadBtn.disabled = false;
+    uploadStatus.textContent = '上传完成，共 ' + imagePreview.children.length + ' 张';
+    imageInput.value = '';
+  });
   
-  document.getElementById('post-form').addEventListener('submit', async (e) => {
+  document.getElementById('post-form').addEventListener('submit', async function(e) {
     e.preventDefault();
-    const status = document.getElementById('status');
-    const btn = e.target.querySelector('button[type="submit"]');
+    var status = document.getElementById('status');
+    var btn = e.target.querySelector('button[type="submit"]');
     
-    const title = document.getElementById('title').value.trim();
-    let slug = document.getElementById('slug').value.trim() || generateSlug(title);
-    const date = document.getElementById('date').value;
-    const tags = document.getElementById('tags').value.split(',').map(t => t.trim()).filter(t => t);
-    const content = textarea.value;
-    const password = document.getElementById('admin-pwd').value;
+    var title = document.getElementById('title').value.trim();
+    var slug = document.getElementById('slug').value.trim() || generateSlug(title);
+    var date = document.getElementById('date').value;
+    var tags = document.getElementById('tags').value.split(',').map(function(t){ return t.trim(); }).filter(function(t){ return t; });
+    var content = textarea.value;
+    var password = pwdInput.value;
     
     if (!slug.endsWith('.md')) slug += '.md';
     
@@ -123,27 +242,27 @@ import BaseLayout from '../layouts/BlogPost.astro';
     status.innerHTML = '正在提交到 GitHub...';
     
     try {
-      const res = await fetch('/api/publish', {
+      var res = await fetch('/api/publish', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, slug, date, tags, content, password })
+        body: JSON.stringify({ title: title, slug: slug, date: date, tags: tags, content: content, password: password })
       });
       
-      const data = await res.json();
-      
+      var data = await res.json();
       if (!res.ok) throw new Error(data.error || '发布失败');
       
       status.style.background = '#000';
       status.style.color = '#fff';
-      status.innerHTML = `✅ 发布成功！<<br>文件路径：${data.path}<br>Cloudflare 正在自动构建，约 1-2 分钟后上线。<br><a href="/blog/${slug.replace('.md', '')}/" style="color:#cc0000;">→ 查看文章</a>`;
+      status.innerHTML = '✅ 发布成功！<<br>文件路径：' + data.path + '<br>Cloudflare 正在自动构建，约 1-2 分钟后上线。<br><a href="/blog/' + slug.replace('.md', '') + '/" style="color:#cc0000;">→ 查看文章</a>';
       
       e.target.reset();
       document.getElementById('date').valueAsDate = new Date();
       document.getElementById('preview').style.display = 'none';
+      imagePreview.innerHTML = '';
     } catch (err) {
       status.style.background = '#cc0000';
       status.style.color = '#fff';
-      status.innerHTML = `❌ 错误：${err.message}<br><small style="opacity:0.8;">检查密码是否正确，或 GitHub Token 是否已绑定</small>`;
+      status.innerHTML = '❌ 错误：' + err.message + '<br><small style="opacity:0.8;">检查密码是否正确，或 GitHub Token 是否已绑定</small>';
     } finally {
       btn.disabled = false;
       btn.textContent = '🚀 发布';
