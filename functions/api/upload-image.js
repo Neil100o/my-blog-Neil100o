@@ -3,7 +3,6 @@ export async function onRequestPost(context) {
     const { request, env } = context;
     const { filename, content, password } = await request.json();
     
-    // 密码验证（和博客共用密码）
     if (!env.ADMIN_PASSWORD || password !== env.ADMIN_PASSWORD) {
       return Response.json({ error: '密码错误' }, { status: 403 });
     }
@@ -18,16 +17,14 @@ export async function onRequestPost(context) {
       return Response.json({ error: '仅支持图片格式: ' + allowed.join(', ') }, { status: 400 });
     }
     
-    // 生成唯一文件名
     const now = new Date();
     const dateStr = now.getFullYear().toString() +
       String(now.getMonth() + 1).padStart(2, '0') +
       String(now.getDate()).padStart(2, '0');
     const random = Math.random().toString(36).substring(2, 8);
     const safeName = dateStr + '-' + random + '.' + ext;
-    const path = 'blog/' + safeName;  // 放在 blog/ 子目录里，方便管理
+    const path = 'blog/' + safeName;
     
-    // 上传到独立图床仓库 Neil100o/images
     const githubRes = await fetch(
       `https://api.github.com/repos/Neil100o/bolg_images_mo/contents/${path}`,
       {
@@ -51,10 +48,9 @@ export async function onRequestPost(context) {
       return Response.json({ error: err.message || 'GitHub 上传失败' }, { status: 500 });
     }
     
-    // 返回 GitHub raw 外链（全球 CDN，国内可访问）
     return Response.json({
       success: true,
-      url: `https://raw.githubusercontent.com/Neil100o/bolg_images_mo/main/${path}`,
+      url: `https://cdn.jsdelivr.net/gh/Neil100o/bolg_images_mo@main/${path}`,
       name: safeName
     });
     
