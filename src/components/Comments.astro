@@ -1,0 +1,65 @@
+<div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #eee;">
+	<h3>评论</h3>
+
+	<form id="comment-form" style="margin-bottom: 2rem;">
+		<div style="margin-bottom: 0.5rem;">
+			<input name="author" placeholder="昵称" required="" style="padding: 0.5rem; width: 200px;" />
+		</div>
+		<div style="margin-bottom: 0.5rem;">
+			<textarea name="content" placeholder="说点什么..." required="" style="padding: 0.5rem; width: 100%; min-height: 80px;"></textarea>
+		</div>
+		<button type="submit" style="padding: 0.5rem 1rem;">提交评论</button>
+	</form>
+
+	<div id="comments-list">加载中...</div>
+</div>
+
+<script is:inline="">
+	const path = window.location.pathname;
+
+	// 加载评论
+	fetch(`/api/comments?path=${encodeURIComponent(path)}`)
+	.then(r => r.json())
+	.then(data => {
+	const list = document.getElementById('comments-list');
+	if (!data || !data.length) {
+	list.innerHTML = '<p style="color: #999;">暂无评论，来抢沙发吧</p>';
+	return;
+	}
+	list.innerHTML = data.map(c => `
+	<div style="border-bottom: 1px solid #eee; padding: 1rem 0;">
+		<div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+			<strong>${c.author}</strong>
+			<small style="color: #999;">${new Date(c.created_at).toLocaleString('zh-CN')}</small>
+		</div>
+		<p style="margin: 0; white-space: pre-wrap;">${c.content}</p>
+	</div>
+	`).join('');
+	});
+
+	// 提交
+	document.getElementById('comment-form').addEventListener('submit', async (e) => {
+	e.preventDefault();
+	const form = e.target;
+	const btn = form.querySelector('button');
+	btn.disabled = true;
+	btn.textContent = '提交中...';
+
+	try {
+	await fetch(`/api/comments?path=${encodeURIComponent(path)}`, {
+	method: 'POST',
+	headers: { 'Content-Type': 'application/json' },
+	body: JSON.stringify({
+	author: form.author.value,
+	content: form.content.value
+	})
+	});
+	form.reset();
+	location.reload();
+	} catch (err) {
+	alert('提交失败，请重试');
+	btn.disabled = false;
+	btn.textContent = '提交评论';
+	}
+	});
+</script>
