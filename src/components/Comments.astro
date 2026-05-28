@@ -1,101 +1,100 @@
 <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #eee;">
 	<h3>评论</h3>
 
-	<form id="comment-form" style="margin-bottom: 2rem;">
+	<form id="cf" onsubmit="return false;" style="margin-bottom: 2rem;">
 		<div style="display: flex; gap: 1rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
-			<input name="author" placeholder="昵称 *" required="" style="padding: 0.5rem; width: 200px;" />
-			<input type="email" name="email" placeholder="邮箱（选填，不会公开显示）" style="padding: 0.5rem; width: 260px;" />
+			<input name="author" placeholder="昵称 *" required="" style="padding: 0.5rem; width: 200px; border: 2px solid #000;" />
+			<input type="email" name="email" placeholder="邮箱（选填）" style="padding: 0.5rem; width: 260px; border: 2px solid #000;" />
 		</div>
-		<div style="margin-bottom: 0.5rem; position: relative;">
-			<textarea id="comment-textarea" name="content" placeholder="说点什么..." required="" style="padding: 0.5rem; width: 100%; min-height: 80px;"></textarea>
-
-			<div style="margin-top: 0.5rem;">
-				<button type="button" id="emoji-toggle" style="padding: 0.3rem 0.8rem; background: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;">😊 表情</button>
-				<div id="emoji-panel" style="display: none; margin-top: 0.5rem; padding: 0.8rem; background: #fafafa; border: 1px solid #ddd; border-radius: 6px; max-height: 220px; overflow-y: auto;">
-					<div id="emoji-container"></div>
-				</div>
-			</div>
-		</div>
-		<button type="submit" style="padding: 0.5rem 1rem;">提交评论</button>
+		<textarea id="tx" name="content" placeholder="说点什么..." required="" style="padding: 0.5rem; width: 100%; min-height: 80px; margin-bottom: 0.5rem; border: 2px solid #000;"></textarea>
+		<button type="submit" id="sb" style="padding: 0.5rem 1rem; background: #000; color: #fff; border: 2px solid #000; font-weight: 700; cursor: pointer;">提交评论</button>
 	</form>
 
-	<div id="comments-list">加载中...</div>
+	<div id="cl">加载中...</div>
 </div>
 
-<script is:inline="" src="/js/emoji-picker.js"></script>
-
 <script is:inline="">
-	(function() {
-	var path = window.location.pathname;
-	var textarea = document.getElementById('comment-textarea');
+	(function(){
+	var p = location.pathname;
+	var tx = document.getElementById('tx');
+	var cl = document.getElementById('cl');
 
-	fetch('/api/comments?path=' + encodeURIComponent(path))
-	.then(function(r) {
-	if (!r.ok) throw new Error('加载失败: ' + r.status);
+	// 加载评论
+	function load() {
+	fetch('/api/comments?path=' + encodeURIComponent(p))
+	.then(function(r){
+	if(!r.ok) throw new Error('HTTP ' + r.status);
 	return r.json();
 	})
-	.then(function(data) {
-	var list = document.getElementById('comments-list');
-	if (!data || !data.length) {
-	list.innerHTML = '<p style="color: #999;">暂无评论，来抢沙发吧</p>';
+	.then(function(d){
+	if(!d || !d.length){
+	cl.innerHTML = '<p style="color:#999">暂无评论，来抢沙发吧</p>';
 	return;
 	}
-	var out = '';
-	for (var i = 0; i < data.length; i++) {
-          var c = data[i];
-          var emailHint = c.email ? '<small style="color:#999; margin-left:0.5rem;">✉ ' + c.email + '</small>' : '';
-	out += '<div style="border-bottom: 1px solid #eee; padding: 1rem 0;">
+	var h = '';
+	for(var i = 0; i < d.length; i++){
+          var c = d[i];
+          var mail = c.email ? ' <small style="color:#999">(' + c.email + ')</small>' : '';
+	h += '<div style="border-bottom:1px solid #eee;padding:1rem 0">
 		' +
-		'<div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; flex-wrap: wrap; align-items: center;">
+		'<div style="display:flex;justify-content:space-between;margin-bottom:0.5rem;flex-wrap:wrap">
 			' +
 			'<div>
-				<strong>' + c.author + '</strong>' + emailHint + '
+				<strong>' + c.author + '</strong>' + mail + '
 			</div>' +
-			'<small style="color: #999;">' + new Date(c.created_at).toLocaleString('zh-CN') + '</small>' +
+			'<small style="color:#999">' + new Date(c.created_at).toLocaleString('zh-CN') + '</small>' +
 			'
 		</div>' +
-		'<p style="margin: 0; white-space: pre-wrap;">' + c.content + '</p>' +
+		'<p style="margin:0;white-space:pre-wrap">' + c.content + '</p>' +
 		'
 	</div>';
 	}
-	list.innerHTML = out;
+	cl.innerHTML = h;
 	})
-	.catch(function(err) {
-	document.getElementById('comments-list').innerHTML = '<p style="color: red;">评论加载失败: ' + err.message + '</p>';
+	.catch(function(e){
+	cl.innerHTML = '<p style="color:red">加载失败: ' + e.message + '</p>';
 	});
+	}
 
-	document.getElementById('comment-form').addEventListener('submit', function(e) {
+	// 提交
+	var form = document.getElementById('cf');
+	var btn = document.getElementById('sb');
+
+	form.addEventListener('submit', function(e){
 	e.preventDefault();
-	var form = e.target;
-	var btn = form.querySelector('button[type="submit"]');
+	e.stopPropagation();
 
 	btn.disabled = true;
 	btn.textContent = '提交中...';
 
-	fetch('/api/comments?path=' + encodeURIComponent(path), {
+	fetch('/api/comments?path=' + encodeURIComponent(p), {
 	method: 'POST',
-	headers: { 'Content-Type': 'application/json' },
+	headers: {'Content-Type': 'application/json'},
 	body: JSON.stringify({
 	author: form.author.value,
 	email: form.email.value,
-	content: textarea.value
+	content: tx.value
 	})
 	})
-	.then(function(r) {
-	if (!r.ok) {
-	return r.json().then(function(err) { throw new Error(err.error || '提交失败'); });
+	.then(function(r){
+	if(!r.ok){
+	return r.json().then(function(err){ throw new Error(err.error || '提交失败'); });
 	}
 	return r.json();
 	})
-	.then(function() {
+	.then(function(){
 	form.reset();
-	location.reload();
+	load(); // 不刷新页面，直接重新加载评论
 	})
-	.catch(function(err) {
+	.catch(function(err){
 	alert('提交失败: ' + err.message);
 	btn.disabled = false;
 	btn.textContent = '提交评论';
 	});
+
+	return false; // 三重保险
 	});
+
+	load();
 	})();
 </script>
