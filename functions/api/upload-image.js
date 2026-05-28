@@ -54,7 +54,7 @@ export async function onRequestPost(context) {
     // 返回 GitHub raw 外链（全球 CDN，国内可访问）
     return Response.json({
       success: true,
-      url: `https://raw.githubusercontent.com/Neil100o/images/main/${path}`,
+      url: `https://raw.githubusercontent.com/Neil100o/bolg_images_mo/main/${path}`,
       name: safeName
     });
     
