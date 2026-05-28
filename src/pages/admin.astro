@@ -35,6 +35,12 @@ import Layout from '../layouts/BlogPost.astro';
       </div>
 
       <div>
+        <label style="display: block; font-weight: 800; margin-bottom: 0.4rem; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.05em;">顶图链接（可选）</label>
+        <input type="text" id="heroImage" placeholder="粘贴图片外链，如 https://cdn.jsdelivr.net/gh/..." style="width: 100%; padding: 0.7rem; border: 2px solid #000; font-size: 1rem;" />
+        <small style="color: #666;">留空则使用默认占位图。上传图片后会自动填入第一张图的链接</small>
+      </div>
+
+      <div>
         <label style="display: block; font-weight: 800; margin-bottom: 0.4rem; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.05em;">图片</label>
         <input type="file" id="image-input" accept="image/*" multiple style="display: none;" />
         <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
@@ -55,6 +61,12 @@ import Layout from '../layouts/BlogPost.astro';
         <button type="submit" style="flex: 1; padding: 0.9rem; background: #cc0000; color: #fff; border: 2px solid #cc0000; font-weight: 800; cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em;">🚀 发布</button>
       </div>
     </form>
+
+    <div id="post-list" style="margin-top: 2rem; padding: 1.5rem; border: 2px solid #000;">
+      <h2 style="border-bottom: 2px solid #cc0000; padding-bottom: 0.5rem; margin-bottom: 1rem;">📄 已发布文章</h2>
+      <div id="posts-loading">加载中...</div>
+      <div id="posts-container"></div>
+    </div>
     
     <div id="preview" style="margin-top: 2rem; padding: 2rem; border: 2px solid #000; display: none;">
       <h2 style="border-bottom: 2px solid #cc0000; padding-bottom: 0.5rem; margin-bottom: 1rem;">预览</h2>
@@ -153,7 +165,7 @@ import Layout from '../layouts/BlogPost.astro';
     imageInput.click();
   });
 
-    imageInput.addEventListener('change', async function() {
+  imageInput.addEventListener('change', async function() {
     var files = imageInput.files;
     if (!files.length) return;
     if (!pwdInput.value) {
@@ -168,7 +180,6 @@ import Layout from '../layouts/BlogPost.astro';
 
     for (var i = 0; i < files.length; i++) {
       var file = files[i];
-      
       if (!file.type.startsWith('image/')) {
         uploadStatus.textContent = '❌ ' + file.name + ' 不是图片';
         uploadStatus.style.color = '#cc0000';
@@ -194,11 +205,16 @@ import Layout from '../layouts/BlogPost.astro';
         });
 
         var data = await res.json();
-        
         if (!data.success) {
           uploadStatus.textContent = '❌ ' + file.name + ' 失败: ' + (data.error || '未知错误');
           uploadStatus.style.color = '#cc0000';
           continue;
+        }
+
+        // 自动填入顶图（第一张图且顶图框为空时）
+        var heroInput = document.getElementById('heroImage');
+        if (!heroInput.value) {
+          heroInput.value = data.url;
         }
 
         var md = '\n![' + file.name + '](' + data.url + ')\n';
@@ -228,6 +244,7 @@ import Layout from '../layouts/BlogPost.astro';
     imageInput.value = '';
   });
   
+  // 发布文章
   document.getElementById('post-form').addEventListener('submit', async function(e) {
     e.preventDefault();
     var status = document.getElementById('status');
@@ -239,6 +256,7 @@ import Layout from '../layouts/BlogPost.astro';
     var tags = document.getElementById('tags').value.split(',').map(function(t){ return t.trim(); }).filter(function(t){ return t; });
     var content = textarea.value;
     var password = pwdInput.value;
+    var heroImage = document.getElementById('heroImage').value.trim();
     
     if (!slug.endsWith('.md')) slug += '.md';
     
@@ -253,7 +271,15 @@ import Layout from '../layouts/BlogPost.astro';
       var res = await fetch('/api/publish', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: title, slug: slug, date: date, tags: tags, content: content, password: password })
+        body: JSON.stringify({ 
+          title: title, 
+          slug: slug, 
+          date: date, 
+          tags: tags, 
+          content: content, 
+          password: password,
+          heroImage: heroImage
+        })
       });
       
       var data = await res.json();
@@ -266,6 +292,7 @@ import Layout from '../layouts/BlogPost.astro';
       e.target.reset();
       document.getElementById('date').valueAsDate = new Date();
       document.getElementById('preview').style.display = 'none';
+      document.getElementById('heroImage').value = '';
       imagePreview.innerHTML = '';
     } catch (err) {
       status.style.background = '#cc0000';
@@ -276,4 +303,65 @@ import Layout from '../layouts/BlogPost.astro';
       btn.textContent = '🚀 发布';
     }
   });
+
+  // 加载已发布文章列表
+  (function loadPosts() {
+    fetch('https://api.github.com/repos/Neil100o/my-blog-Neil100o/contents/src/content/blog')
+      .then(function(r) { return r.json(); })
+      .then(function(files) {
+        var container = document.getElementById('posts-container');
+        var loading = document.getElementById('posts-loading');
+        loading.style.display = 'none';
+        
+        if (!Array.isArray(files) || !files.length) {
+          container.innerHTML = '<p style="color:#999">暂无文章</p>';
+          return;
+        }
+        
+        var html = '<div style="display:flex;flex-direction:column;gap:0.5rem;">';
+        for (var i = 0; i < files.length; i++) {
+          var f = files[i];
+          if (f.type !== 'file' || !f.name.endsWith('.md')) continue;
+          var slug = f.name;
+          var url = '/blog/' + slug.replace('.md', '') + '/';
+          html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.6rem;border:1px solid #e0e0e0;">' +
+            '<a href="' + url + '" target="_blank" style="font-weight:700;">' + slug + '</a>' +
+            '<button class="del-btn" data-slug="' + slug + '" style="padding:0.3rem 0.8rem;background:#cc0000;color:#fff;border:none;cursor:pointer;font-weight:700;">删除</button>' +
+          '</div>';
+        }
+        html += '</div>';
+        container.innerHTML = html;
+        
+        container.addEventListener('click', function(e) {
+          if (e.target.classList.contains('del-btn')) {
+            var slug = e.target.getAttribute('data-slug');
+            if (!confirm('确定删除 "' + slug + '" 吗？')) return;
+            if (!pwdInput.value) { alert('先填写发布密码'); return; }
+            
+            e.target.disabled = true;
+            e.target.textContent = '删除中...';
+            
+            fetch('/api/delete-post', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ slug: slug, password: pwdInput.value })
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+              if (!data.success) throw new Error(data.error);
+              alert('删除成功，1-2 分钟后生效');
+              e.target.parentElement.remove();
+            })
+            .catch(function(err) {
+              alert('删除失败: ' + err.message);
+              e.target.disabled = false;
+              e.target.textContent = '删除';
+            });
+          }
+        });
+      })
+      .catch(function() {
+        document.getElementById('posts-loading').textContent = '加载失败，请刷新';
+      });
+  })();
 </script>

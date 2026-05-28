@@ -21,11 +21,13 @@ export async function onRequestPost(context) {
     const tagStr = tags && tags.length 
       ? `\ntags: [${tags.map(t => `"${t}"`).join(', ')}]` 
       : '';
+
+    const heroImageStr = body.heroImage ? `\nheroImage: "${body.heroImage}"` : '';
     
     const fileContent = `---
 title: "${title}"
 pubDate: ${date}
-description: "${title}"${tagStr}
+description: "${title}"${tagStr}${heroImageStr}
 ---
 
 ${content}
