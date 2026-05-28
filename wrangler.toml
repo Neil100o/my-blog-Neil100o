@@ -1,8 +1,9 @@
 name = "moblog"
 main = "functions/api/comments.js"
+pages_build_output_dir = "dist"
 compatibility_date = "2026-05-28"
 
 [[d1_databases]]
-binding = "myblog_comments"
+binding = "DB"
 database_name = "myblog-comments"
 database_id = "592ff6e6-b34a-45fb-9fd8-f27c63efeb41"
