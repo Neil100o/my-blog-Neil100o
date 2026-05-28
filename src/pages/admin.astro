@@ -153,21 +153,25 @@ import Layout from '../layouts/BlogPost.astro';
     imageInput.click();
   });
 
-  imageInput.addEventListener('change', async function() {
+    imageInput.addEventListener('change', async function() {
     var files = imageInput.files;
     if (!files.length) return;
     if (!pwdInput.value) {
-      alert('先填写发布密码');
+      uploadStatus.textContent = '❌ 先填写发布密码';
+      uploadStatus.style.color = '#cc0000';
       return;
     }
 
     uploadStatus.textContent = '准备处理 ' + files.length + ' 张图片...';
+    uploadStatus.style.color = '#000';
     uploadBtn.disabled = true;
 
     for (var i = 0; i < files.length; i++) {
       var file = files[i];
+      
       if (!file.type.startsWith('image/')) {
-        alert(file.name + ' 不是图片，跳过');
+        uploadStatus.textContent = '❌ ' + file.name + ' 不是图片';
+        uploadStatus.style.color = '#cc0000';
         continue;
       }
 
@@ -190,8 +194,10 @@ import Layout from '../layouts/BlogPost.astro';
         });
 
         var data = await res.json();
+        
         if (!data.success) {
-          alert(file.name + ' 上传失败: ' + data.error);
+          uploadStatus.textContent = '❌ ' + file.name + ' 失败: ' + (data.error || '未知错误');
+          uploadStatus.style.color = '#cc0000';
           continue;
         }
 
@@ -209,14 +215,16 @@ import Layout from '../layouts/BlogPost.astro';
         thumb.style.border = '2px solid #000';
         thumb.title = data.name;
         imagePreview.appendChild(thumb);
+        
+        uploadStatus.textContent = '✅ ' + file.name + ' 上传成功';
 
       } catch (err) {
-        alert(file.name + ' 压缩/上传错误: ' + err.message);
+        uploadStatus.textContent = '❌ ' + file.name + ' 错误: ' + err.message;
+        uploadStatus.style.color = '#cc0000';
       }
     }
 
     uploadBtn.disabled = false;
-    uploadStatus.textContent = '上传完成，共 ' + imagePreview.children.length + ' 张';
     imageInput.value = '';
   });
   
