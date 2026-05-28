@@ -22,73 +22,79 @@
 </div>
 
 <script is:inline="">
-	const path = window.location.pathname;
-	const textarea = document.getElementById('comment-textarea');
+	(function() {
+	var path = window.location.pathname;
+	var textarea = document.getElementById('comment-textarea');
+	var emojis = ['😀','😂','🤣','😭','😍','🥰','😘','😡','🥶','🤡','👍','👎','🙏','💪','🎉','🔥','💀','☕','🍺','🍜','🌹','🌟','✨','❤️','💔','♻️','🇨🇳','☭'];
+	var kaomojis = ['(⌒▽⌒)☆','(≧▽≦)','(￣▽￣)','(｡･ω･｡)','(´･ω･`)','(｀・ω・´)','(✿◡‿◡)','(╯°□°）╯︵ ┻━┻','(╥﹏╥)','(；´Д｀)','(￣ヘ￣)','( ﾟдﾟ)','(・ω<< )★','(´-ι_-｀)','(｡ŏ_ŏ)','(ง •_•)ง','( ͡° ͜ʖ ͡°)','(☭ ͜ʖ ☭)','(✿ ♡‿♡)','(>ω<<)','(´；ω；`)','(╬ Ò﹏Ó)','(ﾉ*>∀<<)ﾉ♡','(￣﹃￣='')','( つ•̀ω•́)つ=''','(๑•̀ㅂ•́)و✧=''','(°ー°〃=''
 
-	// 表情数据
-	const emojis = ['😀','😂','🤣','😭','😍','🥰','😘','😡','🥶','🤡','👍','👎','🙏','💪','🎉','🔥','💀','☕','🍺','🍜','🌹','🌟','✨','❤️','💔','♻️','🇨🇳','☭'];
-	const kaomojis = ['(⌒▽⌒)☆','(≧▽≦)','(￣▽￣)','(｡･ω･｡)','(´･ω･`)','(｀・ω・´)','(✿◡‿◡)','(╯°□°）╯︵ ┻━┻','(╥﹏╥)','(；´Д｀)','(￣ヘ￣)','( ﾟдﾟ)','(・ω<< )★','(´-ι_-｀)','(｡ŏ_ŏ)','(ง •_•)ง','( ͡° ͜ʖ ͡°)','(☭ ͜ʖ ☭)','(✿ ♡‿♡)','(>ω<<)','(´；ω；`)','(╬ Ò﹏Ó)','(ﾉ*>∀<<)ﾉ♡','(￣﹃￣='')','( つ•̀ω•́)つ=''','(๑•̀ㅂ•́)و✧=''','(°ー°〃=''
+    function makeSection(title, items) {
+      var div = document.createElement('div=''
+      div.style.marginBottom = '0.6rem=''
+      var small = document.createElement('small=''
+      small.style.color = '#666=''
+      small.style.fontWeight = 'bold=''
+      small.textContent = title;
+      div.appendChild(small);
+      var wrap = document.createElement('div=''
+      wrap.style.display = 'flex=''
+      wrap.style.flexWrap = 'wrap=''
+      wrap.style.gap = '0.3rem=''
+      wrap.style.marginTop = '0.3rem=''';
+      for (var i = 0; i < items.length; i++) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'emoji-btn';
+        btn.style.padding = '0.2rem 0.4rem';
+        btn.style.background = 'white';
+        btn.style.border = '1px solid #e0e0e0';
+        btn.style.borderRadius = '4px';
+        btn.style.cursor = 'pointer';
+        btn.style.fontSize = title === 'Emoji' ? '1.2rem' : '0.85rem';
+        btn.style.whiteSpace = 'nowrap';
+        btn.textContent = items[i];
+        wrap.appendChild(btn);
+      }
+      div.appendChild(wrap);
+      return div;
+    }
 
-  // 生成表情面板
-  const container = document.getElementById('emoji-container=''');
-  
-  let html = '<div style="margin-bottom:0.6rem;">
-		<small style="color:#666;font-weight:bold;">Emoji</small>
-		<div style="display:flex;flex-wrap:wrap;gap:0.3rem;margin-top:0.3rem;">
-			';
-			emojis.forEach(function(e) {
-			html += '<button type="button" class="emoji-btn" data-char="' + e + '" style="padding:0.2rem 0.4rem;background:white;border:1px solid #e0e0e0;border-radius:4px;cursor:pointer;font-size:1.2rem;">' + e + '</button>';
-			});
-			html += '
-		</div>
-	</div>';
+    var container = document.getElementById('emoji-container');
+    container.appendChild(makeSection('Emoji', emojis));
+    container.appendChild(makeSection('颜文字', kaomojis));
 
-	html += '<div style="margin-bottom:0.6rem;">
-		<small style="color:#666;font-weight:bold;">颜文字</small>
-		<div style="display:flex;flex-wrap:wrap;gap:0.3rem;margin-top:0.3rem;">
-			';
-			kaomojis.forEach(function(k) {
-			html += '<button type="button" class="emoji-btn" data-char="' + k.replace(/"/g, '&quot;') + '" style="padding:0.2rem 0.5rem;background:white;border:1px solid #e0e0e0;border-radius:4px;cursor:pointer;font-size:0.85rem;white-space:nowrap;">' + k + '</button>';
-			});
-			html += '
-		</div>
-	</div>';
+    document.getElementById('emoji-toggle').addEventListener('click', function() {
+      var panel = document.getElementById('emoji-panel');
+      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    });
 
-	container.innerHTML = html;
+    document.getElementById('emoji-panel').addEventListener('click', function(e) {
+      if (e.target.classList.contains('emoji-btn')) {
+        var char = e.target.textContent;
+        var start = textarea.selectionStart;
+        var end = textarea.selectionEnd;
+        var text = textarea.value;
+        textarea.value = text.slice(0, start) + char + text.slice(end);
+        textarea.focus();
+        textarea.setSelectionRange(start + char.length, start + char.length);
+      }
+    });
 
-	// 表情面板开关
-	document.getElementById('emoji-toggle').addEventListener('click', function() {
-	const panel = document.getElementById('emoji-panel');
-	panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-	});
-
-	// 点击表情插入到光标位置
-	document.getElementById('emoji-panel').addEventListener('click', function(e) {
-	if (e.target.classList.contains('emoji-btn')) {
-	const char = e.target.getAttribute('data-char');
-	const start = textarea.selectionStart;
-	const end = textarea.selectionEnd;
-	const text = textarea.value;
-	textarea.value = text.slice(0, start) + char + text.slice(end);
-	textarea.focus();
-	textarea.setSelectionRange(start + char.length, start + char.length);
-	}
-	});
-
-	// 加载评论
-	fetch('/api/comments?path=' + encodeURIComponent(path))
-	.then(async function(r) {
-	if (!r.ok) throw new Error('加载失败: ' + r.status);
-	return r.json();
-	})
-	.then(function(data) {
-	const list = document.getElementById('comments-list');
-	if (!data || !data.length) {
-	list.innerHTML = '<p style="color: #999;">暂无评论，来抢沙发吧</p>';
+    fetch('/api/comments?path=' + encodeURIComponent(path))
+      .then(function(r) {
+        if (!r.ok) throw new Error('加载失败: ' + r.status);
+        return r.json();
+      })
+      .then(function(data) {
+        var list = document.getElementById('comments-list');
+        if (!data || !data.length) {
+          list.innerHTML = '<p style="color: #999;">暂无评论，来抢沙发吧</p>';
 	return;
 	}
-	list.innerHTML = data.map(function(c) {
-	return '<div style="border-bottom: 1px solid #eee; padding: 1rem 0;">
+	var out = '';
+	for (var i = 0; i < data.length; i++) {
+          var c = data[i];
+          out += '<div style="border-bottom: 1px solid #eee; padding: 1rem 0;">
 		' +
 		'<div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
 			' +
@@ -99,42 +105,45 @@
 		'<p style="margin: 0; white-space: pre-wrap;">' + c.content + '</p>' +
 		'
 	</div>';
-	}).join('');
+	}
+	list.innerHTML = out;
 	})
 	.catch(function(err) {
 	document.getElementById('comments-list').innerHTML = '<p style="color: red;">评论加载失败: ' + err.message + '</p>';
 	});
 
-	// 提交
-	document.getElementById('comment-form').addEventListener('submit', async function(e) {
+	document.getElementById('comment-form').addEventListener('submit', function(e) {
 	e.preventDefault();
-	const form = e.target;
-	const btn = form.querySelector('button[type="submit"]');
+	var form = e.target;
+	var btn = form.querySelector('button[type="submit"]');
+	var content = textarea.value;
 
 	btn.disabled = true;
 	btn.textContent = '提交中...';
 
-	try {
-	const res = await fetch('/api/comments?path=' + encodeURIComponent(path), {
+	fetch('/api/comments?path=' + encodeURIComponent(path), {
 	method: 'POST',
 	headers: { 'Content-Type': 'application/json' },
 	body: JSON.stringify({
 	author: form.author.value,
-	content: textarea.value
+	content: content
 	})
-	});
-
-	if (!res.ok) {
-	const err = await res.json().catch(function() { return { error: '未知错误' }; });
-	throw new Error(err.error || '提交失败');
+	})
+	.then(function(r) {
+	if (!r.ok) {
+	return r.json().then(function(err) { throw new Error(err.error || '提交失败'); });
 	}
-
+	return r.json();
+	})
+	.then(function() {
 	form.reset();
 	location.reload();
-	} catch (err) {
+	})
+	.catch(function(err) {
 	alert('提交失败: ' + err.message);
 	btn.disabled = false;
 	btn.textContent = '提交评论';
-	}
 	});
+	});
+	})();
 </script>
