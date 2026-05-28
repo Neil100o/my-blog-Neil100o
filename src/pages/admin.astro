@@ -40,6 +40,11 @@ import Layout from '../layouts/BlogPost.astro';
         <small style="color: #666;">留空则使用默认占位图。上传图片后会自动填入第一张图的链接</small>
       </div>
 
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin: 0.5rem 0;">
+        <input type="checkbox" id="hidden" style="width: 1.2rem; height: 1.2rem; accent-color: #cc0000; cursor: pointer;" />
+        <label for="hidden" style="font-weight: 700; font-size: 0.9rem; cursor: pointer;">🚪 隐藏文章（不显示在博客列表，只能通过彩蛋或直链访问）</label>
+      </div>
+
       <div>
         <label style="display: block; font-weight: 800; margin-bottom: 0.4rem; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.05em;">图片</label>
         <input type="file" id="image-input" accept="image/*" multiple style="display: none;" />
@@ -279,6 +284,7 @@ import Layout from '../layouts/BlogPost.astro';
           content: content, 
           password: password,
           heroImage: heroImage
+          hidden: document.getElementById('hidden').checked
         })
       });
       

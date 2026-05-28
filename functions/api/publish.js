@@ -27,7 +27,7 @@ export async function onRequestPost(context) {
     const fileContent = `---
 title: "${title}"
 pubDate: ${date}
-description: "${title}"${tagStr}${heroImageStr}
+description: "${title}"${tagStr}${heroImageStr}${hiddenStr}
 ---
 
 ${content}
