@@ -1,17 +1,25 @@
 ---
 interface Props {
-	date: Date;
+  date: Date | string;
 }
 
 const { date } = Astro.props;
+
+// 防御：防止 undefined 或非法日期导致构建崩溃
+let safeDate: Date;
+if (!date) {
+  safeDate = new Date(); // 如果日期缺失，默认显示当前时间（避免报错）
+} else if (date instanceof Date && !isNaN(date.getTime())) {
+  safeDate = date;
+} else {
+  safeDate = new Date(date);
+}
 ---
 
-<time datetime={date.toISOString()}>
-	{
-		date.toLocaleDateString('en-us', {
-			year: 'numeric',
-			month: 'short',
-			day: 'numeric',
-		})
-	}
+<<time datetime={safeDate.toISOString()}>
+  {safeDate.toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })}
 </time>
