@@ -62,6 +62,8 @@
     .then(function() {
       form.reset();
       load();
+      btn.disabled = false;
+      btn.textContent = '提交评论';
     })
     .catch(function(err) {
       alert('提交失败: ' + err.message);
@@ -73,4 +75,41 @@
   });
 
   load();
+  // 点赞功能
+  (function() {
+    var likeBtn = document.getElementById('like-btn');
+    var likeCount = document.getElementById('like-count');
+    var likeIcon = document.getElementById('like-icon');
+    if (!likeBtn || !likeCount) return;
+
+    function loadLike() {
+      fetch('/api/like?path=' + encodeURIComponent(path))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          likeCount.textContent = (d.count || 0) + ' 赞';
+        })
+        .catch(function() {
+          likeCount.textContent = '0 赞';
+        });
+    }
+
+    likeBtn.addEventListener('click', function() {
+      likeBtn.disabled = true;
+      fetch('/api/like?path=' + encodeURIComponent(path), { method: 'POST' })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          likeCount.textContent = (d.count || 0) + ' 赞';
+          likeIcon.textContent = '♥';
+          likeBtn.style.background = '#cc0000';
+          likeBtn.style.color = '#fff';
+          likeBtn.style.borderColor = '#cc0000';
+        })
+        .catch(function(err) {
+          alert('点赞失败: ' + err.message);
+          likeBtn.disabled = false;
+        });
+    });
+
+    loadLike();
+  })();
 })();
