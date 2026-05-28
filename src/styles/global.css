@@ -1,28 +1,33 @@
-/* ==================================================
+/* ===================================================
    Soviet Editorial Minimal Theme
-   极简苏式档案 / 工业文档风
-   适合博客 / wiki / Markdown / 个人站
-================================================== */
+   适合：
+   - 博客
+   - wiki
+   - 文档站
+   - Markdown 页面
+   - 技术 / 历史 / 架空世界观网站
+
+   风格：
+   苏式工业印刷 + 档案感 + 极简 brutalism
+=================================================== */
 
 :root {
+
   /* 主色 */
-  --accent: #b02020;
-  --accent-dark: #7d1414;
+  --accent: #b10000;
+  --accent-dark: #7d0000;
 
-  /* 纸张 */
   --paper: #f3efe6;
-  --paper-dark: #e7e0d2;
+  --paper-dark: #e7e1d5;
 
-  /* 墨色 */
   --ink: #111111;
   --ink-soft: #444444;
-  --line: #1a1a1a;
 
-  /* 次级 */
-  --gray: #d8d2c7;
+  --line: #1a1a1a;
+  --line-soft: #bdb6aa;
 
   /* 字体 */
-  --font-main:
+  --font-body:
     "IBM Plex Sans",
     "Noto Sans SC",
     "Source Han Sans SC",
@@ -34,106 +39,69 @@
     monospace;
 }
 
-/* ==================================================
-   RESET
-================================================== */
+/* ===== Reset ===== */
 
 * {
-  box-sizing: border-box;
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
 }
 
-/* ==================================================
-   BODY
-================================================== */
+/* ===== 页面 ===== */
 
 body {
-  font-family: var(--font-main);
 
   background:
     linear-gradient(
-      rgba(0,0,0,0.015),
-      rgba(0,0,0,0.015)
+      rgba(0,0,0,0.012),
+      rgba(0,0,0,0.012)
     ),
     var(--paper);
 
   color: var(--ink);
 
-  line-height: 1.65;
-  letter-spacing: 0.01em;
+  font-family: var(--font-body);
+
   font-size: 16px;
+  line-height: 1.65;
 
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
+  letter-spacing: 0.01em;
+
+  text-rendering: geometricPrecision;
 }
 
-/* subtle paper texture */
-
-body::before {
-  content: "";
-
-  position: fixed;
-  inset: 0;
-
-  background-image:
-    repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      rgba(0,0,0,0.015) 3px
-    );
-
-  pointer-events: none;
-  opacity: 0.25;
-}
-
-/* ==================================================
-   LAYOUT
-================================================== */
+/* ===== 主容器 ===== */
 
 main {
   max-width: 760px;
+
   margin: 0 auto;
-  padding: 3rem 1.5rem 6rem;
+
+  padding:
+    3rem
+    1.5rem
+    6rem;
 }
 
-/* ==================================================
-   LINKS
-================================================== */
-
-a {
-  color: var(--ink);
-
-  text-decoration: none;
-
-  border-bottom: 1px solid var(--ink);
-
-  transition:
-    background 0.15s,
-    color 0.15s,
-    border-color 0.15s;
-}
-
-a:hover {
-  background: var(--accent);
-  color: #fff;
-  border-color: var(--accent);
-}
-
-/* ==================================================
-   NAV
-================================================== */
+/* ===== 顶部导航 ===== */
 
 nav {
-  border-bottom: 3px solid var(--ink);
+
+  border-bottom: 3px solid var(--line);
 
   padding-bottom: 1rem;
   margin-bottom: 4rem;
 }
 
 nav a {
-  border: none;
+
+  display: inline-block;
+
+  margin-right: 1.6rem;
+
+  color: var(--ink);
+
+  text-decoration: none;
 
   font-size: 0.82rem;
   font-weight: 800;
@@ -141,73 +109,114 @@ nav a {
   text-transform: uppercase;
   letter-spacing: 0.08em;
 
-  margin-right: 1.8rem;
+  padding: 0.15rem 0;
 }
 
 nav a:hover {
-  background: none;
-  color: var(--accent);
+
+  background: var(--accent);
+
+  color: white;
 }
 
-/* ==================================================
-   HEADINGS
-================================================== */
+/* ===== 标题 ===== */
 
-h1, h2, h3, h4, h5, h6 {
-  color: var(--ink);
+h1, h2, h3, h4 {
 
   font-weight: 900;
 
-  line-height: 1.25;
+  color: var(--ink);
+
+  line-height: 1.2;
 
   margin-top: 2.8rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1.2rem;
 }
 
+/* ===== 一级标题 ===== */
+
 h1 {
+
   font-size: 2.5rem;
 
   text-transform: uppercase;
 
-  letter-spacing: -0.06em;
+  letter-spacing: -0.05em;
 
-  border-bottom: 4px solid var(--ink);
+  border-bottom: 4px solid var(--line);
 
   padding-bottom: 0.6rem;
 }
 
+/* ===== 二级标题 ===== */
+
 h2 {
+
   font-size: 1.55rem;
 
   border-left: 8px solid var(--accent);
 
-  padding-left: 1rem;
-
-  letter-spacing: -0.03em;
+  padding-left: 0.8rem;
 }
 
+/* ===== 三级标题 ===== */
+
 h3 {
-  font-size: 1.2rem;
+
+  font-size: 1.15rem;
 
   text-transform: uppercase;
 
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
 }
 
-/* ==================================================
-   PARAGRAPH
-================================================== */
+/* ===== 段落 ===== */
 
 p {
+
   margin: 1rem 0;
+
+  color: var(--ink-soft);
 }
 
-/* ==================================================
-   LIST
-================================================== */
+/* ===== 链接 ===== */
+
+a {
+
+  color: var(--ink);
+
+  text-decoration: none;
+
+  border-bottom: 1px solid var(--ink);
+
+  transition: 0.15s;
+}
+
+a:hover {
+
+  background: var(--accent);
+
+  color: white;
+
+  border-color: var(--accent);
+}
+
+/* ===== 分割线 ===== */
+
+hr {
+
+  border: none;
+
+  border-top: 2px solid var(--line);
+
+  margin: 3rem 0;
+}
+
+/* ===== 列表 ===== */
 
 ul,
 ol {
+
   margin:
     1rem
     0
@@ -216,14 +225,14 @@ ol {
 }
 
 li {
+
   margin: 0.45rem 0;
 }
 
-/* ==================================================
-   BLOCKQUOTE
-================================================== */
+/* ===== 引用 ===== */
 
 blockquote {
+
   margin: 2rem 0;
 
   padding:
@@ -232,91 +241,85 @@ blockquote {
 
   border-left: 5px solid var(--accent);
 
-  background: rgba(0,0,0,0.04);
+  background: rgba(0,0,0,0.035);
 
   color: var(--ink-soft);
 
   font-style: italic;
 }
 
-/* ==================================================
-   HR
-================================================== */
-
-hr {
-  border: none;
-
-  border-top: 2px solid var(--ink);
-
-  margin: 3rem 0;
-}
-
-/* ==================================================
-   CODE
-================================================== */
+/* ===== 代码 ===== */
 
 code {
+
   background: rgba(0,0,0,0.06);
+
+  color: var(--accent);
 
   padding:
     0.15rem
-    0.35rem;
-
-  font-family: var(--font-mono);
+    0.4rem;
 
   font-size: 0.92em;
 
-  color: var(--accent);
+  font-family: var(--font-mono);
 }
 
-pre {
-  background: #111;
+/* ===== 代码块 ===== */
 
-  color: #f1f1f1;
+pre {
+
+  margin: 1.8rem 0;
 
   padding: 1.2rem;
 
   overflow-x: auto;
 
-  margin: 2rem 0;
+  background: #111111;
+
+  color: #f0f0f0;
 
   border-left: 5px solid var(--accent);
 
-  line-height: 1.55;
+  line-height: 1.5;
 }
 
 pre code {
+
   background: transparent;
+
   color: inherit;
+
   padding: 0;
 }
 
-/* ==================================================
-   TABLE
-================================================== */
+/* ===== 表格 ===== */
 
 table {
-  width: 100%;
 
-  border-collapse: collapse;
+  width: 100%;
 
   margin: 2rem 0;
 
-  border: 2px solid var(--ink);
+  border-collapse: collapse;
+
+  border: 2px solid var(--line);
 }
 
 th,
 td {
+
   padding:
     0.7rem
     0.9rem;
 
-  border: 1px solid #bdb6aa;
+  border: 1px solid var(--line-soft);
 
   text-align: left;
 }
 
 th {
+
   background: var(--ink);
 
   color: white;
@@ -328,38 +331,63 @@ th {
   letter-spacing: 0.04em;
 }
 
-/* ==================================================
-   IMAGE
-================================================== */
+/* ===== 图片 ===== */
 
 img {
-  max-width: 100%;
 
   display: block;
 
-  border: 2px solid var(--ink);
+  max-width: 100%;
 
-  margin: 2rem 0;
+  height: auto;
 
-  filter: contrast(1.02);
+  margin: 2rem auto;
+
+  border: 2px solid var(--line);
 }
 
-/* ==================================================
-   BUTTON
-================================================== */
+/* ===== 输入框 ===== */
+
+input,
+textarea {
+
+  width: 100%;
+
+  background: transparent;
+
+  border: 2px solid var(--line);
+
+  padding: 0.7rem;
+
+  color: var(--ink);
+
+  font-size: 1rem;
+}
+
+input:focus,
+textarea:focus {
+
+  outline: none;
+
+  border-color: var(--accent);
+}
+
+/* ===== 按钮 ===== */
 
 button,
 .btn {
+
   display: inline-block;
 
   background: var(--ink);
+
   color: white;
 
   border: 2px solid var(--ink);
 
   padding:
     0.65rem
-    1.6rem;
+    1.5rem;
 
   font-weight: 800;
 
@@ -374,111 +402,29 @@ button,
 
 button:hover,
 .btn:hover {
+
   background: var(--accent);
 
   border-color: var(--accent);
-
-  color: white;
 }
 
-/* ==================================================
-   INPUT
-================================================== */
-
-input,
-textarea {
-  width: 100%;
-
-  background: rgba(255,255,255,0.6);
-
-  border: 2px solid var(--ink);
-
-  padding: 0.7rem;
-
-  color: var(--ink);
-
-  font-size: 1rem;
-
-  font-family: inherit;
-}
-
-input:focus,
-textarea:focus {
-  outline: none;
-
-  border-color: var(--accent);
-}
-
-/* ==================================================
-   ARTICLE
-================================================== */
-
-article {
-  margin-bottom: 4rem;
-
-  padding-bottom: 3rem;
-
-  border-bottom: 1px solid #cfc6b8;
-}
-
-/* 档案标签 */
-
-article::before {
-  content: "档案";
-
-  display: inline-block;
-
-  background: var(--ink);
-
-  color: white;
-
-  padding:
-    0.18rem
-    0.55rem;
-
-  margin-bottom: 1rem;
-
-  font-size: 0.72rem;
-
-  font-weight: 800;
-
-  text-transform: uppercase;
-
-  letter-spacing: 0.08em;
-}
-
-/* ==================================================
-   TIME
-================================================== */
-
-time {
-  display: inline-block;
-
-  margin-bottom: 1rem;
-
-  font-size: 0.82rem;
-
-  font-weight: 700;
-
-  color: var(--ink-soft);
-
-  letter-spacing: 0.03em;
-}
-
-/* ==================================================
-   TAG
-================================================== */
+/* ===== 标签 ===== */
 
 .tag {
+
   display: inline-block;
 
-  border: 1.5px solid var(--ink);
+  border: 1.5px solid var(--line);
 
   padding:
     0.18rem
     0.6rem;
 
-  margin-right: 0.5rem;
+  margin:
+    0
+    0.5rem
+    0.5rem
+    0;
 
   font-size: 0.72rem;
 
@@ -486,10 +432,11 @@ time {
 
   text-transform: uppercase;
 
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
 }
 
 .tag:hover {
+
   background: var(--accent);
 
   border-color: var(--accent);
@@ -497,41 +444,118 @@ time {
   color: white;
 }
 
-/* ==================================================
-   SELECTION
-================================================== */
+/* ===== 文章 ===== */
+
+article {
+
+  position: relative;
+
+  padding-bottom: 3rem;
+
+  margin-bottom: 3rem;
+
+  border-bottom: 1px solid var(--line-soft);
+}
+
+/* 档案标签 */
+
+article::before {
+
+  content: "ARCHIVE";
+
+  display: inline-block;
+
+  margin-bottom: 1rem;
+
+  padding:
+    0.18rem
+    0.55rem;
+
+  background: var(--ink);
+
+  color: white;
+
+  font-size: 0.68rem;
+
+  font-weight: 900;
+
+  letter-spacing: 0.08em;
+}
+
+/* ===== 时间 ===== */
+
+time {
+
+  display: inline-block;
+
+  margin-top: 0.4rem;
+
+  font-size: 0.82rem;
+
+  font-weight: 700;
+
+  color: #666;
+}
+
+/* ===== 选中文本 ===== */
 
 ::selection {
+
   background: var(--accent);
+
   color: white;
 }
 
-/* ==================================================
-   RESPONSIVE
-================================================== */
+/* ===== 滚动条 ===== */
 
-@media (max-width: 768px) {
+::-webkit-scrollbar {
+
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+
+  background: var(--paper);
+}
+
+::-webkit-scrollbar-thumb {
+
+  background: var(--ink);
+}
+
+::-webkit-scrollbar-thumb:hover {
+
+  background: var(--accent);
+}
+
+/* ===== 响应式 ===== */
+
+@media (max-width: 700px) {
 
   body {
     font-size: 15px;
   }
 
   main {
+
     padding:
       2rem
       1rem
-      4rem;
+      5rem;
   }
 
   h1 {
+
     font-size: 2rem;
   }
 
   h2 {
+
     font-size: 1.35rem;
   }
 
   nav a {
+
     margin-right: 1rem;
   }
 }
