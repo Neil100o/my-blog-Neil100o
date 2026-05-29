@@ -2,11 +2,9 @@ export async function onRequestPost(context) {
   try {
     const { request, env } = context;
     
-    // 解析请求体
     const payload = await request.json();
     const { title, slug, date, tags, content, password, heroImage, hidden } = payload;
     
-    // 密码验证
     if (!env.ADMIN_PASSWORD || password !== env.ADMIN_PASSWORD) {
       return Response.json({ error: '密码错误' }, { status: 403 });
     }
@@ -16,25 +14,25 @@ export async function onRequestPost(context) {
     }
     
     const filename = slug.endsWith('.md') ? slug : `${slug}.md`;
-    const path = `src/content/blog/${filename}`;
+    // 根据 hidden 决定目录：true → hidden/，false → blog/
+    const folder = hidden ? 'hidden' : 'blog';
+    const path = `src/content/${folder}/${filename}`;
     
     const tagStr = tags && tags.length 
       ? `\ntags: [${tags.map(t => `"${t}"`).join(', ')}]` 
       : '';
     
     const heroImageStr = heroImage ? `\nheroImage: "${heroImage}"` : '';
-    const hiddenStr = hidden ? '\nhidden: true' : '';
     
     const fileContent = `---
 title: "${title}"
 pubDate: ${date}
-description: "${title}"${tagStr}${heroImageStr}${hiddenStr}
+description: "${title}"${tagStr}${heroImageStr}
 ---
 
 ${content}
 `;
     
-    // Base64 编码
     const bytes = new TextEncoder().encode(fileContent);
     const binary = Array.from(bytes, b => String.fromCharCode(b)).join('');
     const encoded = btoa(binary);
@@ -50,7 +48,7 @@ ${content}
           'User-Agent': 'Cloudflare-Pages-Blog'
         },
         body: JSON.stringify({
-          message: `add post: ${title}`,
+          message: `add ${hidden ? 'hidden' : 'blog'} post: ${title}`,
           content: encoded,
           branch: 'main'
         })
@@ -66,7 +64,12 @@ ${content}
     }
     
     const data = await githubRes.json();
-    return Response.json({ success: true, path, sha: data.content.sha });
+    return Response.json({ 
+      success: true, 
+      path, 
+      sha: data.content.sha,
+      hidden: !!hidden 
+    });
     
   } catch (e) {
     return Response.json({ error: e.message }, { status: 500 });

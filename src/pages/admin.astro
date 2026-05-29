@@ -293,8 +293,11 @@ import Layout from '../layouts/BlogPost.astro';
       
       status.style.background = '#000';
       status.style.color = '#fff';
-      status.innerHTML = '✅ 发布成功！<<br>文件路径：' + data.path + '<br>Cloudflare 正在自动构建，约 1-2 分钟后上线。<br><a href="/blog/' + slug.replace('.md', '') + '/" style="color:#cc0000;">→ 查看文章</a>';
-      
+      var isHidden = document.getElementById('hidden').checked;
+      var viewPath = isHidden ? '/secret/' : '/blog/';
+      var viewUrl = viewPath + slug.replace('.md', '') + '/';
+
+      status.innerHTML = '✅ 发布成功！<<br>文件路径：' + data.path + '<br>Cloudflare 正在自动构建，约 1-2 分钟后上线。<br><a href="' + viewUrl + '" style="color:#cc0000;">→ 查看文章</a>';
       e.target.reset();
       document.getElementById('date').valueAsDate = new Date();
       document.getElementById('preview').style.display = 'none';
@@ -312,62 +315,83 @@ import Layout from '../layouts/BlogPost.astro';
 
   // 加载已发布文章列表
   (function loadPosts() {
-    fetch('https://api.github.com/repos/Neil100o/my-blog-Neil100o/contents/src/content/blog')
-      .then(function(r) { return r.json(); })
-      .then(function(files) {
-        var container = document.getElementById('posts-container');
-        var loading = document.getElementById('posts-loading');
-        loading.style.display = 'none';
+  var container = document.getElementById('posts-container');
+  var loading = document.getElementById('posts-loading');
+  
+  Promise.all([
+    fetch('https://api.github.com/repos/Neil100o/my-blog-Neil100o/contents/src/content/blog').then(r => r.json()).catch(() => []),
+    fetch('https://api.github.com/repos/Neil100o/my-blog-Neil100o/contents/src/content/hidden').then(r => r.json()).catch(() => [])
+  ]).then(function(results) {
+    var blogFiles = Array.isArray(results[0]) ? results[0] : [];
+    var hiddenFiles = Array.isArray(results[1]) ? results[1] : [];
+    
+    loading.style.display = 'none';
+    
+    var allFiles = [];
+    blogFiles.forEach(function(f) {
+      if (f.type === 'file' && f.name.endsWith('.md')) {
+        f._folder = 'blog';
+        f._url = '/blog/' + f.name.replace('.md', '') + '/';
+        allFiles.push(f);
+      }
+    });
+    hiddenFiles.forEach(function(f) {
+      if (f.type === 'file' && f.name.endsWith('.md')) {
+        f._folder = 'hidden';
+        f._url = '/secret/' + f.name.replace('.md', '') + '/';
+        allFiles.push(f);
+      }
+    });
+    
+    allFiles.sort(function(a, b) { return b.name.localeCompare(a.name); });
+    
+    if (!allFiles.length) {
+      container.innerHTML = '<p style="color:#999">暂无文章</p>';
+      return;
+    }
+    
+    var html = '<div style="display:flex;flex-direction:column;gap:0.5rem;">';
+    for (var i = 0; i < allFiles.length; i++) {
+      var f = allFiles[i];
+      var label = f._folder === 'hidden' ? '<span style="background:#cc0000;color:#fff;padding:0.1rem 0.4rem;font-size:0.75rem;margin-right:0.5rem;">隐藏</span>' : '';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.6rem;border:1px solid #e0e0e0;">' +
+        '<div style="display:flex;align-items:center;overflow:hidden;">' + label + '<a href="' + f._url + '" target="_blank" style="font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + f.name + '</a></div>' +
+        '<button class="del-btn" data-slug="' + f.name + '" data-folder="' + f._folder + '" style="padding:0.3rem 0.8rem;background:#cc0000;color:#fff;border:none;cursor:pointer;font-weight:700;flex-shrink:0;">删除</button>' +
+      '</div>';
+    }
+    html += '</div>';
+    container.innerHTML = html;
+    
+    container.addEventListener('click', function(e) {
+      if (e.target.classList.contains('del-btn')) {
+        var slug = e.target.getAttribute('data-slug');
+        var folder = e.target.getAttribute('data-folder');
+        if (!confirm('确定删除 "' + slug + '" 吗？')) return;
+        if (!pwdInput.value) { alert('先填写发布密码'); return; }
         
-        if (!Array.isArray(files) || !files.length) {
-          container.innerHTML = '<p style="color:#999">暂无文章</p>';
-          return;
-        }
+        e.target.disabled = true;
+        e.target.textContent = '删除中...';
         
-        var html = '<div style="display:flex;flex-direction:column;gap:0.5rem;">';
-        for (var i = 0; i < files.length; i++) {
-          var f = files[i];
-          if (f.type !== 'file' || !f.name.endsWith('.md')) continue;
-          var slug = f.name;
-          var url = '/blog/' + slug.replace('.md', '') + '/';
-          html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.6rem;border:1px solid #e0e0e0;">' +
-            '<a href="' + url + '" target="_blank" style="font-weight:700;">' + slug + '</a>' +
-            '<button class="del-btn" data-slug="' + slug + '" style="padding:0.3rem 0.8rem;background:#cc0000;color:#fff;border:none;cursor:pointer;font-weight:700;">删除</button>' +
-          '</div>';
-        }
-        html += '</div>';
-        container.innerHTML = html;
-        
-        container.addEventListener('click', function(e) {
-          if (e.target.classList.contains('del-btn')) {
-            var slug = e.target.getAttribute('data-slug');
-            if (!confirm('确定删除 "' + slug + '" 吗？')) return;
-            if (!pwdInput.value) { alert('先填写发布密码'); return; }
-            
-            e.target.disabled = true;
-            e.target.textContent = '删除中...';
-            
-            fetch('/api/delete-post', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ slug: slug, password: pwdInput.value })
-            })
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-              if (!data.success) throw new Error(data.error);
-              alert('删除成功，1-2 分钟后生效');
-              e.target.parentElement.remove();
-            })
-            .catch(function(err) {
-              alert('删除失败: ' + err.message);
-              e.target.disabled = false;
-              e.target.textContent = '删除';
-            });
-          }
+        fetch('/api/delete-post', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ slug: slug, folder: folder, password: pwdInput.value })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (!data.success) throw new Error(data.error);
+          alert('删除成功，1-2 分钟后生效');
+          e.target.parentElement.remove();
+        })
+        .catch(function(err) {
+          alert('删除失败: ' + err.message);
+          e.target.disabled = false;
+          e.target.textContent = '删除';
         });
-      })
-      .catch(function() {
-        document.getElementById('posts-loading').textContent = '加载失败，请刷新';
-      });
-  })();
+      }
+    });
+  }).catch(function() {
+    loading.textContent = '加载失败，请刷新';
+  });
+})();
 </script>
