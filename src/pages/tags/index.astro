@@ -1,0 +1,48 @@
+---
+import Layout from '../../layouts/BlogPost.astro';
+import { SITE_TITLE } from '../../consts';
+
+const blogMods = import.meta.glob('../../content/blog/**/*.md', { eager: true });
+const hiddenMods = import.meta.glob('../../content/hidden/**/*.md', { eager: true });
+
+const allPosts = [
+  ...Object.entries(blogMods).map(([, mod]) => mod.frontmatter),
+  ...Object.entries(hiddenMods).map(([, mod]) => mod.frontmatter)
+];
+
+const tagMap = {};
+allPosts.forEach(post => {
+  if (post.tags && Array.isArray(post.tags)) {
+    post.tags.forEach(tag => {
+      if (!tagMap[tag]) tagMap[tag] = 0;
+      tagMap[tag]++;
+    });
+  }
+});
+
+const tags = Object.entries(tagMap).sort((a, b) => b[1] - a[1]);
+---
+
+<Layout title={`标签 | ${SITE_TITLE}`} description="文章标签索引">
+  <main style="max-width: 960px; margin: 0 auto; padding: 2rem 1rem;">
+    <h1 style="font-size: 2.5rem; border-bottom: 3px solid #cc0000; padding-bottom: 0.5rem; margin-bottom: 2rem;">
+      标签
+    </h1>
+    
+    <div style="display: flex; flex-wrap: wrap; gap: 1rem;">
+      {tags.map(([tag, count]) => (
+        <a 
+          href={`/tags/${tag}/`} 
+          style="display: inline-block; padding: 0.6rem 1.2rem; border: 2px solid #000; color: #000; text-decoration: none; font-weight: 700; transition: all 0.2s;"
+          onmouseover="this.style.background='#000';this.style.color='#fff';"
+          onmouseout="this.style.background='transparent';this.style.color='#000';"
+        >
+          {tag}
+          <span style="display: inline-block; margin-left: 0.5rem; padding: 0.1rem 0.4rem; background: #cc0000; color: #fff; font-size: 0.75rem;">{count}</span>
+        </a>
+      ))}
+    </div>
+    
+    {tags.length === 0 && <p style="color: #999; margin-top: 2rem;">暂无标签</p>}
+  </main>
+</Layout>

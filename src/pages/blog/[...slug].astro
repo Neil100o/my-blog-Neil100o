@@ -16,5 +16,12 @@ const { Content } = await render(post);
 ---
 
 <BlogPost {...post.data}>
+{post.data.tags && post.data.tags.length > 0 && (
+  <div style="margin: 1rem 0; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+    {post.data.tags.map(tag => (
+      <a href={`/tags/${tag}/`} style="display: inline-block; padding: 0.2rem 0.6rem; background: #000; color: #fff; text-decoration: none; font-size: 0.8rem; font-weight: 700;">{tag}</a>
+    ))}
+  </div>
+)}
 	<Content />
 </BlogPost>

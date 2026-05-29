@@ -1,0 +1,72 @@
+---
+import Layout from '../../layouts/BlogPost.astro';
+import { SITE_TITLE } from '../../consts';
+
+export async function getStaticPaths() {
+  const blogMods = import.meta.glob('../../content/blog/**/*.md', { eager: true });
+  const hiddenMods = import.meta.glob('../../content/hidden/**/*.md', { eager: true });
+  
+  const allPosts = [];
+  
+  Object.entries(blogMods).forEach(([path, mod]) => {
+    const id = path.replace(/.*\/blog\/(.*)\.md$/, '$1');
+    allPosts.push({ id, type: 'blog', ...mod.frontmatter });
+  });
+  
+  Object.entries(hiddenMods).forEach(([path, mod]) => {
+    const id = path.replace(/.*\/hidden\/(.*)\.md$/, '$1');
+    allPosts.push({ id, type: 'hidden', ...mod.frontmatter });
+  });
+  
+  const tagMap = {};
+  allPosts.forEach(post => {
+    if (post.tags && Array.isArray(post.tags)) {
+      post.tags.forEach(tag => {
+        if (!tagMap[tag]) tagMap[tag] = [];
+        tagMap[tag].push(post);
+      });
+    }
+  });
+  
+  return Object.keys(tagMap).map(tag => ({
+    params: { tag },
+    props: { posts: tagMap[tag], tag }
+  }));
+}
+
+const { tag } = Astro.params;
+const { posts } = Astro.props;
+
+const sortedPosts = posts.sort((a, b) => {
+  return new Date(b.pubDate || 0).valueOf() - new Date(a.pubDate || 0).valueOf();
+});
+---
+
+<Layout title={`标签: ${tag} | ${SITE_TITLE}`} description={`标签 ${tag} 下的文章`}>
+  <main style="max-width: 960px; margin: 0 auto; padding: 2rem 1rem;">
+    <h1 style="font-size: 2.5rem; border-bottom: 3px solid #cc0000; padding-bottom: 0.5rem; margin-bottom: 2rem;">
+      <span style="color: #666; font-size: 1.2rem; display: block; margin-bottom: 0.3rem;">标签</span>
+      {tag}
+    </h1>
+    
+    <ul style="display: flex; flex-wrap: wrap; gap: 2rem; list-style: none; margin: 0; padding: 0;">
+      {sortedPosts.map((post) => (
+        <li style="width: calc(50% - 1rem);">
+          <a href={post.type === 'hidden' ? `/secret/${post.id}/` : `/blog/${post.id}/`} style="display: block; text-decoration: none; color: #000;">
+            {post.heroImage && (
+              <img src={post.heroImage} alt="" style="width: 100%; border-radius: 12px; margin-bottom: 0.5rem;" />
+            )}
+            <h4 style="margin: 0; font-size: 1.2rem; line-height: 1;">{post.title}</h4>
+            <p style="margin: 0.3rem 0 0; color: #666;">
+              {post.pubDate && new Date(post.pubDate).toLocaleDateString('zh-CN')}
+            </p>
+          </a>
+        </li>
+      ))}
+    </ul>
+    
+    <div style="margin-top: 3rem;">
+      <a href="/tags" style="display: inline-block; padding: 0.6rem 1.5rem; background: #000; color: #fff; text-decoration: none; font-weight: 700;">← 全部标签</a>
+    </div>
+  </main>
+</Layout>
