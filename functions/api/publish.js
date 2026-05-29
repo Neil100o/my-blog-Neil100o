@@ -1,13 +1,13 @@
 export async function onRequestPost(context) {
   try {
     const { request, env } = context;
-    const { title, slug, date, tags, content, password } = await request.json();
+    
+    // 解析请求体
+    const payload = await request.json();
+    const { title, slug, date, tags, content, password, heroImage, hidden } = payload;
     
     // 密码验证
-    if (!env.ADMIN_PASSWORD) {
-      return Response.json({ error: '服务器未配置密码' }, { status: 500 });
-    }
-    if (password !== env.ADMIN_PASSWORD) {
+    if (!env.ADMIN_PASSWORD || password !== env.ADMIN_PASSWORD) {
       return Response.json({ error: '密码错误' }, { status: 403 });
     }
     
@@ -21,8 +21,9 @@ export async function onRequestPost(context) {
     const tagStr = tags && tags.length 
       ? `\ntags: [${tags.map(t => `"${t}"`).join(', ')}]` 
       : '';
-
-    const heroImageStr = body.heroImage ? `\nheroImage: "${body.heroImage}"` : '';
+    
+    const heroImageStr = heroImage ? `\nheroImage: "${heroImage}"` : '';
+    const hiddenStr = hidden ? '\nhidden: true' : '';
     
     const fileContent = `---
 title: "${title}"
@@ -33,6 +34,7 @@ description: "${title}"${tagStr}${heroImageStr}${hiddenStr}
 ${content}
 `;
     
+    // Base64 编码
     const bytes = new TextEncoder().encode(fileContent);
     const binary = Array.from(bytes, b => String.fromCharCode(b)).join('');
     const encoded = btoa(binary);
