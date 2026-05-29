@@ -25,7 +25,7 @@
           h += '<div style="border-bottom:1px solid #eee;padding:1rem 0">' +
             '<div style="display:flex;justify-content:space-between;margin-bottom:0.5rem;flex-wrap:wrap">' +
               '<div><strong>' + c.author + '</strong>' + mail + '</div>' +
-              '<small style="color:#999">' + new Date(c.created_at).toLocaleString('zh-CN') + '</small>' +
+              '<small style="color:#999">' + new Date(c.created_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false }) + '</small>' +
             '</div>' +
             '<p style="margin:0;white-space:pre-wrap">' + c.content + '</p>' +
           '</div>';
