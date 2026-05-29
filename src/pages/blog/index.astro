@@ -10,6 +10,13 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
 const posts = (await getCollection('blog')).sort(
 	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
 );
+
+// 调试：打印第一篇隐藏文章的 hidden 值
+const hiddenPost = posts.find(p => p.data.title === '001010' || p.data.title === '???');
+if (hiddenPost) {
+  console.log('隐藏文章 hidden 值:', hiddenPost.data.hidden);
+  console.log('类型:', typeof hiddenPost.data.hidden);
+}
 ---
 
 <!doctype html>
