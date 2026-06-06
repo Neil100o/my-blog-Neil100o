@@ -12,7 +12,7 @@ export async function onRequest(context) {
 
     if (request.method === 'GET') {
       const { results } = await env.DB.prepare(
-        'SELECT id, path, author, email, content, created_at FROM comments WHERE path = ? ORDER BY created_at DESC'
+        'SELECT id, path, author, email, content, parent_id, created_at FROM comments WHERE path = ? ORDER BY created_at ASC'
       ).bind(path).all();
       return Response.json(results || []);
     }
@@ -23,8 +23,14 @@ export async function onRequest(context) {
         return new Response('Missing fields', { status: 400 });
       }
       await env.DB.prepare(
-        'INSERT INTO comments (path, author, email, content) VALUES (?, ?, ?, ?)'
-      ).bind(path, body.author.slice(0, 50), (body.email || '').slice(0, 100), body.content.slice(0, 2000)).run();
+        'INSERT INTO comments (path, author, email, content, parent_id) VALUES (?, ?, ?, ?, ?)'
+      ).bind(
+        path, 
+        body.author.slice(0, 50), 
+        (body.email || '').slice(0, 100), 
+        body.content.slice(0, 2000),
+        body.parent_id || null
+      ).run();
       return Response.json({ success: true });
     }
 
