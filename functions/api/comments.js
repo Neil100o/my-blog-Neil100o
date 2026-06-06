@@ -19,7 +19,7 @@ export async function onRequest(context) {
 
     if (request.method === 'POST') {
       const body = await request.json();
-      if (!body.author || !body.content) {
+      if (!body.author || !body.email || !body.content) {
         return new Response('Missing fields', { status: 400 });
       }
       await env.DB.prepare(

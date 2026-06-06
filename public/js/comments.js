@@ -117,7 +117,7 @@
       '<div style="background:#f9f9f9;padding:0.8rem;border:2px solid #000;">' +
         '<div style="display:flex;gap:1rem;margin-bottom:0.5rem;flex-wrap:wrap;">' +
           '<input name="author" placeholder="昵称 *" required style="padding:0.4rem;width:180px;border:2px solid #000;" />' +
-          '<input type="email" name="email" placeholder="邮箱（选填）" style="padding:0.4rem;width:220px;border:2px solid #000;" />' +
+          '<input type="email" name="email" placeholder="邮箱 *" required style="padding:0.4rem;width:220px;border:2px solid #000;" />' +
         '</div>' +
         '<textarea name="content" placeholder="回复点什么..." required style="padding:0.4rem;width:100%;min-height:60px;margin-bottom:0.3rem;border:2px solid #000;"></textarea>' +
         '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;">' +
@@ -147,8 +147,8 @@
       var author = wrap.querySelector('input[name="author"]').value.trim();
       var email = wrap.querySelector('input[name="email"]').value.trim();
       var content = rta.value.trim();
-      if (!author || !content) {
-        alert('请填写昵称和内容');
+      if (!author || !email || !content) {
+        alert('请填写昵称、邮箱和内容');
         return;
       }
       rbtn.disabled = true;
