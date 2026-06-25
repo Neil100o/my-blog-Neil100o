@@ -81,6 +81,12 @@ import Layout from '../layouts/BlogPost.astro';
       <div id="posts-container"></div>
     </div>
     
+    <div id="comment-list" style="margin-top: 2rem; padding: 1.5rem; border: 2px solid #000;">
+      <h2 style="border-bottom: 2px solid #cc0000; padding-bottom: 0.5rem; margin-bottom: 1rem;">💬 评论管理</h2>
+      <div id="comments-loading">加载中...</div>
+      <div id="comments-container"></div>
+    </div>
+    
     <div id="preview" style="margin-top: 2rem; padding: 2rem; border: 2px solid #000; display: none;">
       <h2 style="border-bottom: 2px solid #cc0000; padding-bottom: 0.5rem; margin-bottom: 1rem;">预览</h2>
       <div id="preview-content" style="line-height: 1.8;"></div>
@@ -103,6 +109,7 @@ import Layout from '../layouts/BlogPost.astro';
       overlay.style.display = 'none';
       main.style.display = 'block';
       adminPwdInput.value = storedPwd;
+      loadComments();
       return;
     }
 
@@ -125,6 +132,7 @@ import Layout from '../layouts/BlogPost.astro';
         adminPwdInput.value = pwd;
         overlay.style.display = 'none';
         main.style.display = 'block';
+        loadComments();
       })
       .catch(function() {
         alert('密码错误');
@@ -453,4 +461,67 @@ import Layout from '../layouts/BlogPost.astro';
     loading.textContent = '加载失败，请刷新';
   });
 })();
+
+  // 加载评论列表
+  function loadComments() {
+    var container = document.getElementById('comments-container');
+    var loading = document.getElementById('comments-loading');
+    var pwd = adminPwdInput.value;
+    if (!pwd) return;
+    fetch('/api/admin-comments?password=' + encodeURIComponent(pwd))
+      .then(function(r) {
+        if (!r.ok) throw new Error('加载失败');
+        return r.json();
+      })
+      .then(function(d) {
+        loading.style.display = 'none';
+        if (!d || !d.length) {
+          container.innerHTML = '<p style="color:#999">暂无评论</p>';
+          return;
+        }
+        var html = '<div style="display:flex;flex-direction:column;gap:0.5rem;">';
+        for (var i = 0; i < d.length; i++) {
+          var c = d[i];
+          var replyLabel = c.parent_id ? '<span style="background:#cc0000;color:#fff;padding:0.1rem 0.4rem;font-size:0.75rem;margin-right:0.5rem;">回复</span>' : '';
+          html += '<div style="padding:0.8rem;border:1px solid #e0e0e0;">' +
+            '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.5rem;">' +
+              '<div><strong>' + c.author + '</strong> <small style="color:#999">' + (c.email || '') + '</small>' + replyLabel + '</div>' +
+              '<small style="color:#999">' + new Date(c.created_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false }) + '</small>' +
+            '</div>' +
+            '<div style="margin:0.3rem 0;color:#666;font-size:0.85rem;"><a href="' + c.path + '" target="_blank" style="color:#cc0000;">' + c.path + '</a></div>' +
+            '<p style="margin:0.5rem 0;white-space:pre-wrap;font-size:0.95rem;">' + c.content + '</p>' +
+            '<button class="del-comment-btn" data-id="' + c.id + '" style="padding:0.2rem 0.6rem;background:#cc0000;color:#fff;border:none;cursor:pointer;font-weight:700;font-size:0.8rem;">删除</button>' +
+          '</div>';
+        }
+        html += '</div>';
+        container.innerHTML = html;
+      })
+      .catch(function() {
+        loading.textContent = '加载失败';
+      });
+  }
+
+  document.getElementById('comments-container').addEventListener('click', function(e) {
+    if (e.target.classList.contains('del-comment-btn')) {
+      var id = e.target.getAttribute('data-id');
+      if (!confirm('确定删除这条评论吗？')) return;
+      e.target.disabled = true;
+      e.target.textContent = '删除中...';
+      fetch('/api/admin-comments', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: parseInt(id), password: adminPwdInput.value })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (!data.success) throw new Error(data.error);
+        e.target.parentElement.remove();
+      })
+      .catch(function(err) {
+        alert('删除失败: ' + err.message);
+        e.target.disabled = false;
+        e.target.textContent = '删除';
+      });
+    }
+  });
 </script>
