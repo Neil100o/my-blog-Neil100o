@@ -4,18 +4,12 @@ import { SITE_TITLE } from '../../consts';
 
 export async function getStaticPaths() {
   const blogMods = import.meta.glob('../../content/blog/**/*.md', { eager: true });
-  const hiddenMods = import.meta.glob('../../content/hidden/**/*.md', { eager: true });
   
   const allPosts = [];
   
   Object.entries(blogMods).forEach(([path, mod]) => {
     const id = path.replace(/.*\/blog\/(.*)\.md$/, '$1');
     allPosts.push({ id, type: 'blog', ...mod.frontmatter });
-  });
-  
-  Object.entries(hiddenMods).forEach(([path, mod]) => {
-    const id = path.replace(/.*\/hidden\/(.*)\.md$/, '$1');
-    allPosts.push({ id, type: 'hidden', ...mod.frontmatter });
   });
   
   const tagMap = {};
