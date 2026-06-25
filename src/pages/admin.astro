@@ -466,7 +466,7 @@ import Layout from '../layouts/BlogPost.astro';
   function loadComments() {
     var container = document.getElementById('comments-container');
     var loading = document.getElementById('comments-loading');
-    var pwd = adminPwdInput.value;
+    var pwd = pwdInput.value;
     if (!pwd) return;
     fetch('/api/admin-comments?password=' + encodeURIComponent(pwd))
       .then(function(r) {
@@ -510,7 +510,7 @@ import Layout from '../layouts/BlogPost.astro';
       fetch('/api/admin-comments', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: parseInt(id), password: adminPwdInput.value })
+        body: JSON.stringify({ id: parseInt(id), password: pwdInput.value })
       })
       .then(function(r) { return r.json(); })
       .then(function(data) {
