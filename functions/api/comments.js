@@ -31,6 +31,31 @@ export async function onRequest(context) {
         body.content.slice(0, 2000),
         body.parent_id || null
       ).run();
+
+      // 发邮件提醒（失败不影响评论提交）
+      if (env.RESEND_API_KEY && env.NOTIFY_EMAIL) {
+        try {
+          await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + env.RESEND_API_KEY
+            },
+            body: JSON.stringify({
+              from: 'onboarding@resend.dev',
+              to: [env.NOTIFY_EMAIL],
+              subject: '新评论: ' + path,
+              html: '<p><strong>作者:</strong> ' + body.author + ' &lt;' + body.email + '&gt;</p>' +
+                    '<p><strong>文章:</strong> ' + path + '</p>' +
+                    (body.parent_id ? '<p><strong>类型:</strong> 回复</p>' : '<p><strong>类型:</strong> 评论</p>') +
+                    '<p><strong>内容:</strong></p><pre style="background:#f5f5f5;padding:1rem;">' + body.content + '</pre>'
+            })
+          });
+        } catch (mailErr) {
+          console.error('Mail send failed:', mailErr);
+        }
+      }
+
       return Response.json({ success: true });
     }
 
