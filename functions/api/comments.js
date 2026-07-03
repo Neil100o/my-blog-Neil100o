@@ -43,7 +43,7 @@ export async function onRequest(context) {
           ).bind(body.parent_id).all();
           const parent = parentResults && parentResults[0];
           if (parent && parent.email && parent.email !== body.email) {
-            await fetch('https://api.resend.com/emails', {
+            const res = await fetch('https://api.resend.com/emails', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -60,6 +60,10 @@ export async function onRequest(context) {
                       '<p><a href="' + (url.origin + path) + '" style="color:#cc0000;">→ 查看文章</a></p>'
               })
             });
+            if (!res.ok) {
+              const err = await res.json().catch(() => ({}));
+              console.error('Resend reply notification error:', res.status, err);
+            }
           }
         } catch (replyMailErr) {
           console.error('Reply notification failed:', replyMailErr);
@@ -69,7 +73,7 @@ export async function onRequest(context) {
       // 发邮件提醒管理员（失败不影响评论提交）
       if (env.RESEND_API_KEY && env.NOTIFY_EMAIL) {
         try {
-          await fetch('https://api.resend.com/emails', {
+          const res = await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -85,6 +89,10 @@ export async function onRequest(context) {
                     '<p><strong>内容:</strong></p><pre style="background:#f5f5f5;padding:1rem;">' + body.content + '</pre>'
             })
           });
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            console.error('Resend admin notification error:', res.status, err);
+          }
         } catch (mailErr) {
           console.error('Mail send failed:', mailErr);
         }
