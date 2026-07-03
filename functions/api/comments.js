@@ -32,7 +32,37 @@ export async function onRequest(context) {
         body.parent_id || null
       ).run();
 
-      // 发邮件提醒（失败不影响评论提交）
+      // 通知被回复的人
+      if (body.parent_id && env.RESEND_API_KEY) {
+        try {
+          const parent = await env.DB.prepare(
+            'SELECT author, email, content FROM comments WHERE id = ?'
+          ).bind(body.parent_id).first();
+          if (parent && parent.email && parent.email !== body.email) {
+            await fetch('https://api.resend.com/emails', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + env.RESEND_API_KEY
+              },
+              body: JSON.stringify({
+                from: 'onboarding@resend.dev',
+                to: [parent.email],
+                subject: body.author + ' 回复了你在 ' + path + ' 的评论',
+                html: '<p><strong>' + body.author + '</strong> 回复了你的评论：</p>' +
+                      '<p style="background:#f5f5f5;padding:1rem;">' + body.content + '</p>' +
+                      '<p>你的原评论：</p>' +
+                      '<p style="background:#f5f5f5;padding:1rem;color:#666;">' + parent.content + '</p>' +
+                      '<p><a href="' + (url.origin + path) + '" style="color:#cc0000;">→ 查看文章</a></p>'
+              })
+            });
+          }
+        } catch (replyMailErr) {
+          console.error('Reply notification failed:', replyMailErr);
+        }
+      }
+
+      // 发邮件提醒管理员（失败不影响评论提交）
       if (env.RESEND_API_KEY && env.NOTIFY_EMAIL) {
         try {
           await fetch('https://api.resend.com/emails', {
