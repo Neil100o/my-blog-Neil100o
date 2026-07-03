@@ -38,9 +38,10 @@ export async function onRequest(context) {
       // 通知被回复的人
       if (body.parent_id && env.RESEND_API_KEY) {
         try {
-          const parent = await env.DB.prepare(
+          const { results: parentResults } = await env.DB.prepare(
             'SELECT author, email, content FROM comments WHERE id = ?'
-          ).bind(body.parent_id).first();
+          ).bind(body.parent_id).all();
+          const parent = parentResults && parentResults[0];
           if (parent && parent.email && parent.email !== body.email) {
             await fetch('https://api.resend.com/emails', {
               method: 'POST',
