@@ -14,6 +14,9 @@ export async function onRequest(context) {
       const { results } = await env.DB.prepare(
         'SELECT id, path, author, email, content, parent_id, created_at FROM comments ORDER BY created_at DESC'
       ).all();
+      (results || []).forEach(r => {
+        if (r.created_at && !r.created_at.endsWith('Z')) r.created_at += 'Z';
+      });
       return Response.json(results || []);
     }
 
