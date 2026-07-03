@@ -35,6 +35,9 @@ export async function onRequest(context) {
         body.parent_id || null
       ).run();
 
+      // 调试日志
+      let notify_log = [];
+
       // 通知被回复的人
       if (body.parent_id && env.RESEND_API_KEY) {
         try {
@@ -42,6 +45,11 @@ export async function onRequest(context) {
             'SELECT author, email, content FROM comments WHERE id = ?'
           ).bind(body.parent_id).all();
           const parent = parentResults && parentResults[0];
+          notify_log.push('parent found: ' + (parent ? 'yes' : 'no'));
+          if (parent) {
+            notify_log.push('parent email: ' + parent.email);
+            notify_log.push('same email: ' + (parent.email === body.email));
+          }
           if (parent && parent.email && parent.email !== body.email) {
             const res = await fetch('https://api.resend.com/emails', {
               method: 'POST',
@@ -60,17 +68,22 @@ export async function onRequest(context) {
                       '<p><a href="' + (url.origin + path) + '" style="color:#cc0000;">→ 查看文章</a></p>'
               })
             });
+            notify_log.push('resend status: ' + res.status);
             if (!res.ok) {
               const err = await res.json().catch(() => ({}));
-              console.error('Resend reply notification error:', res.status, err);
+              notify_log.push('resend error: ' + JSON.stringify(err));
+            } else {
+              notify_log.push('resend sent ok');
             }
           }
         } catch (replyMailErr) {
-          console.error('Reply notification failed:', replyMailErr);
+          notify_log.push('replyMailErr: ' + replyMailErr.message);
         }
+      } else {
+        notify_log.push('no reply notify: parent_id=' + body.parent_id + ', resend_key=' + (env.RESEND_API_KEY ? 'yes' : 'no'));
       }
 
-      // 发邮件提醒管理员（失败不影响评论提交）
+      // 发邮件提醒管理员
       if (env.RESEND_API_KEY && env.NOTIFY_EMAIL) {
         try {
           const res = await fetch('https://api.resend.com/emails', {
@@ -89,16 +102,13 @@ export async function onRequest(context) {
                     '<p><strong>内容:</strong></p><pre style="background:#f5f5f5;padding:1rem;">' + body.content + '</pre>'
             })
           });
-          if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            console.error('Resend admin notification error:', res.status, err);
-          }
+          notify_log.push('admin notify status: ' + res.status);
         } catch (mailErr) {
-          console.error('Mail send failed:', mailErr);
+          notify_log.push('adminMailErr: ' + mailErr.message);
         }
       }
 
-      return Response.json({ success: true });
+      return Response.json({ success: true, notify_log });
     }
 
     return new Response('Method not allowed', { status: 405 });
