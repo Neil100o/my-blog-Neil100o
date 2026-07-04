@@ -31,15 +31,15 @@ import Layout from '../layouts/BlogPost.astro';
         <small style="color: #666;">最终链接：https://moblog-aa5.pages.dev/blog/你的slug/</small>
       </div>
       
-      <div style="display: flex; gap: 1rem;">
-        <div style="flex: 1;">
+      <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 240px;">
           <label style="display: block; font-weight: 800; margin-bottom: 0.4rem; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.05em;">发布时间</label>
           <div id="publish-time-display" style="padding: 0.7rem; border: 2px solid #000; background: #f5f5f5; color: #666; font-size: 0.95rem;">加载中...</div>
           <input type="hidden" id="date" />
         </div>
-        <div style="flex: 1;">
+        <div style="flex: 1; min-width: 240px;">
           <label style="display: block; font-weight: 800; margin-bottom: 0.4rem; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.05em;">标签</label>
-          <input type="text" id="tags" placeholder="随笔, 技术, 生活" style="width: 100%; padding: 0.7rem; border: 2px solid #000;" />
+          <input type="text" id="tags" placeholder="随笔, 技术, 生活" style="width: 100%; padding: 0.7rem; border: 2px solid #000; font-size: 1rem;" />
         </div>
       </div>
 
@@ -57,9 +57,9 @@ import Layout from '../layouts/BlogPost.astro';
       <div>
         <label style="display: block; font-weight: 800; margin-bottom: 0.4rem; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.05em;">图片</label>
         <input type="file" id="image-input" accept="image/*" multiple style="display: none;" />
-        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-          <button type="button" id="upload-btn" style="padding: 0.5rem 1rem; background: #000; color: #fff; border: 2px solid #000; font-weight: 700; cursor: pointer;">📎 选择图片</button>
-          <span id="upload-status" style="color: #666; font-size: 0.9rem; align-self: center;"></span>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+          <button type="button" id="upload-btn" style="padding: 0.6rem 1.2rem; background: #000; color: #fff; border: 2px solid #000; font-weight: 700; cursor: pointer; font-size: 1rem; min-height: 44px;">📎 选择图片</button>
+          <span id="upload-status" style="color: #666; font-size: 0.9rem;"></span>
         </div>
         <div id="image-preview" style="display: flex; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap;"></div>
         <small style="color: #666;">支持多选，自动压缩并插入 Markdown，单张建议不超过 10MB</small>
@@ -67,12 +67,12 @@ import Layout from '../layouts/BlogPost.astro';
       
       <div>
         <label style="display: block; font-weight: 800; margin-bottom: 0.4rem; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.05em;">内容（Markdown）</label>
-        <textarea id="content" rows="20" required style="width: 100%; padding: 0.7rem; border: 2px solid #000; font-family: 'SF Mono', Monaco, monospace; font-size: 0.95rem; line-height: 1.7; resize: vertical;"></textarea>
+        <textarea id="content" rows="12" required style="width: 100%; padding: 0.7rem; border: 2px solid #000; font-family: 'SF Mono', Monaco, monospace; font-size: 16px; line-height: 1.7; resize: vertical;"></textarea>
       </div>
       
-      <div style="display: flex; gap: 1rem;">
-        <button type="button" id="preview-btn" style="flex: 1; padding: 0.9rem; background: #fff; color: #000; border: 2px solid #000; font-weight: 800; cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em;">👁 预览</button>
-        <button type="submit" style="flex: 1; padding: 0.9rem; background: #cc0000; color: #fff; border: 2px solid #cc0000; font-weight: 800; cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em;">🚀 发布</button>
+      <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+        <button type="button" id="preview-btn" style="flex: 1; min-width: 120px; padding: 0.9rem; background: #fff; color: #000; border: 2px solid #000; font-weight: 800; cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em; font-size: 1rem; min-height: 48px;">👁 预览</button>
+        <button type="submit" style="flex: 1; min-width: 120px; padding: 0.9rem; background: #cc0000; color: #fff; border: 2px solid #cc0000; font-weight: 800; cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em; font-size: 1rem; min-height: 48px;">🚀 发布</button>
       </div>
     </form>
 
@@ -427,9 +427,9 @@ import Layout from '../layouts/BlogPost.astro';
     for (var i = 0; i < allFiles.length; i++) {
       var f = allFiles[i];
       var label = f._folder === 'hidden' ? '<span style="background:#cc0000;color:#fff;padding:0.1rem 0.4rem;font-size:0.75rem;margin-right:0.5rem;">隐藏</span>' : '';
-      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.6rem;border:1px solid #e0e0e0;">' +
-        '<div style="display:flex;align-items:center;overflow:hidden;">' + label + '<a href="' + f._url + '" target="_blank" style="font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + f.name + '</a></div>' +
-        '<button class="del-btn" data-slug="' + f.name + '" data-folder="' + f._folder + '" style="padding:0.3rem 0.8rem;background:#cc0000;color:#fff;border:none;cursor:pointer;font-weight:700;flex-shrink:0;">删除</button>' +
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.6rem;border:1px solid #e0e0e0;gap:0.5rem;">' +
+        '<div style="display:flex;align-items:center;overflow:hidden;flex:1;">' + label + '<a href="' + f._url + '" target="_blank" style="font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + f.name + '</a></div>' +
+        '<button class="del-btn" data-slug="' + f.name + '" data-folder="' + f._folder + '" style="padding:0.4rem 1rem;background:#cc0000;color:#fff;border:none;cursor:pointer;font-weight:700;flex-shrink:0;font-size:1rem;min-height:40px;">删除</button>' +
       '</div>';
     }
     html += '</div>';
@@ -496,7 +496,7 @@ import Layout from '../layouts/BlogPost.astro';
             '</div>' +
             '<div style="margin:0.3rem 0;color:#666;font-size:0.85rem;"><a href="' + c.path + '" target="_blank" style="color:#cc0000;">' + c.path + '</a></div>' +
             '<p style="margin:0.5rem 0;white-space:pre-wrap;font-size:0.95rem;">' + c.content + '</p>' +
-            '<button class="del-comment-btn" data-id="' + c.id + '" style="padding:0.2rem 0.6rem;background:#cc0000;color:#fff;border:none;cursor:pointer;font-weight:700;font-size:0.8rem;">删除</button>' +
+            '<button class="del-comment-btn" data-id="' + c.id + '" style="padding:0.3rem 0.8rem;background:#cc0000;color:#fff;border:none;cursor:pointer;font-weight:700;font-size:0.9rem;min-height:36px;">删除</button>' +
           '</div>';
         }
         html += '</div>';
