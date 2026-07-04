@@ -16,7 +16,10 @@ const posts = (await getCollection('blog'))
 		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
 		<style>
 			main {
-				width: 960px;
+				width: 100%;
+				max-width: 960px;
+				padding: 0 1rem;
+				box-sizing: border-box;
 			}
 			ul {
 				display: flex;
