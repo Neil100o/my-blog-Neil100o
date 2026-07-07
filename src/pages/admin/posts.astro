@@ -65,6 +65,7 @@ import Layout from '../../layouts/BlogPost.astro';
       })
       .then(function() {
         sessionStorage.setItem('adminPwd', pwd);
+        if (pwdInput) pwdInput.value = pwd;
         overlay.style.display = 'none';
         main.style.display = 'block';
         loadPosts();

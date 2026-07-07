@@ -76,6 +76,7 @@ import Layout from '../../layouts/BlogPost.astro';
       })
       .then(function() {
         sessionStorage.setItem('adminPwd', pwd);
+        if (pwdInput) pwdInput.value = pwd;
         overlay.style.display = 'none';
         main.style.display = 'block';
         loadComments();
@@ -181,10 +182,15 @@ import Layout from '../../layouts/BlogPost.astro';
     var container = document.getElementById('access-container');
     var loading = document.getElementById('access-loading');
     var pwdInput = document.getElementById('admin-pwd');
-    if (!pwdInput || !pwdInput.value) return;
+    if (!pwdInput || !pwdInput.value) {
+      loading.textContent = '密码缺失，请重新登录';
+      return;
+    }
     fetch('/api/log-access?password=' + encodeURIComponent(pwdInput.value))
       .then(function(r) {
-        if (!r.ok) throw new Error('加载失败');
+        if (!r.ok) {
+          return r.json().then(function(err) { throw new Error(err.error || 'HTTP ' + r.status); });
+        }
         return r.json();
       })
       .then(function(d) {
@@ -210,8 +216,8 @@ import Layout from '../../layouts/BlogPost.astro';
         html += '</div>';
         container.innerHTML = html;
       })
-      .catch(function() {
-        loading.textContent = '加载失败';
+      .catch(function(err) {
+        loading.textContent = '加载失败: ' + err.message;
       });
   }
 </script>
