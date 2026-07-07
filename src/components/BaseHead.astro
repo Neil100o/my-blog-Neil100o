@@ -52,15 +52,4 @@ const { title, description, image = FallbackImage } = Astro.props;
 <meta property="twitter:title" content={title} />
 <meta property="twitter:description" content={description} />
 <meta property="twitter:image" content={new URL(image.src, Astro.url)} />
-
-<script is:inline>
-(function() {
-  try {
-    fetch('/api/log-access', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path: location.pathname })
-    });
-  } catch (e) {}
-})();
-</script>
+</head>
