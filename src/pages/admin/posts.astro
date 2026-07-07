@@ -1,0 +1,170 @@
+---
+import Layout from '../../layouts/BlogPost.astro';
+---
+
+<Layout title="文章管理">
+  <div id="auth-overlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;z-index:9999;display:flex;align-items:center;justify-content:center;">
+  <div style="border:3px solid #000;padding:2rem;max-width:400px;width:90%;">
+    <h2 style="margin:0 0 1.5rem 0;border-bottom:3px solid #cc0000;padding-bottom:0.5rem;">🔒 文章管理</h2>
+    <p style="margin:0 0 1rem 0;color:#666;">请输入密码进入</p>
+    <input type="password" id="auth-pwd" placeholder="密码" style="width:100%;padding:0.7rem;border:2px solid #000;font-size:1rem;margin-bottom:1rem;" />
+    <button id="auth-btn" style="width:100%;padding:0.8rem;background:#000;color:#fff;border:2px solid #000;font-weight:800;cursor:pointer;">进入</button>
+  </div>
+</div>
+
+<main id="admin-main" style="max-width: 800px; margin: 0 auto; padding: 2rem 1rem; display: none;">
+    <div style="display:none;">
+      <input type="password" id="admin-pwd" style="display:none;" />
+    </div>
+    <h1 style="border-bottom: 3px solid #000; padding-bottom: 0.5rem; margin-bottom: 2rem;">📄 文章管理</h1>
+    
+    <div style="display:flex;gap:0.5rem;margin-bottom:2rem;border-bottom:2px solid #000;padding-bottom:0.5rem;flex-wrap:wrap;">
+      <a href="/admin" style="padding:0.5rem 1rem;background:#fff;color:#000;border:2px solid #000;text-decoration:none;font-weight:800;">✎ 发布</a>
+      <a href="/admin/posts" style="padding:0.5rem 1rem;background:#000;color:#fff;text-decoration:none;font-weight:800;">📄 文章</a>
+      <a href="/admin/comments" style="padding:0.5rem 1rem;background:#fff;color:#000;border:2px solid #000;text-decoration:none;font-weight:800;">💬 评论</a>
+    </div>
+    
+    <div id="post-list" style="padding: 1.5rem; border: 2px solid #000;">
+      <h2 style="border-bottom: 2px solid #cc0000; padding-bottom: 0.5rem; margin-bottom: 1rem;">📄 已发布文章</h2>
+      <div id="posts-loading">加载中...</div>
+      <div id="posts-container"></div>
+    </div>
+  </main>
+</Layout>
+
+<script is:inline>
+  (function() {
+    var overlay = document.getElementById('auth-overlay');
+    var main = document.getElementById('admin-main');
+    var authPwd = document.getElementById('auth-pwd');
+    var authBtn = document.getElementById('auth-btn');
+    var pwdInput = document.getElementById('admin-pwd');
+
+    var storedPwd = sessionStorage.getItem('adminPwd');
+    if (storedPwd) {
+      overlay.style.display = 'none';
+      main.style.display = 'block';
+      if (pwdInput) pwdInput.value = storedPwd;
+      loadPosts();
+      return;
+    }
+
+    function doAuth() {
+      var pwd = authPwd.value.trim();
+      if (!pwd) { alert('请输入密码'); return; }
+      authBtn.disabled = true;
+      authBtn.textContent = '验证中...';
+      fetch('/api/verify-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pwd })
+      })
+      .then(function(r) {
+        if (!r.ok) throw new Error('密码错误');
+        return r.json();
+      })
+      .then(function() {
+        sessionStorage.setItem('adminPwd', pwd);
+        overlay.style.display = 'none';
+        main.style.display = 'block';
+        loadPosts();
+      })
+      .catch(function() {
+        alert('密码错误');
+        authPwd.value = '';
+        authPwd.focus();
+        authBtn.disabled = false;
+        authBtn.textContent = '进入';
+      });
+    }
+
+    authBtn.addEventListener('click', doAuth);
+    authPwd.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') doAuth();
+    });
+    authPwd.focus();
+  })();
+
+  // 加载已发布文章列表
+  function loadPosts() {
+    var container = document.getElementById('posts-container');
+    var loading = document.getElementById('posts-loading');
+    var pwdInput = document.getElementById('admin-pwd');
+    
+    Promise.all([
+      fetch('https://api.github.com/repos/Neil100o/my-blog-Neil100o/contents/src/content/blog').then(r => r.json()).catch(() => []),
+      fetch('https://api.github.com/repos/Neil100o/my-blog-Neil100o/contents/src/content/hidden').then(r => r.json()).catch(() => [])
+    ]).then(function(results) {
+      var blogFiles = Array.isArray(results[0]) ? results[0] : [];
+      var hiddenFiles = Array.isArray(results[1]) ? results[1] : [];
+      
+      loading.style.display = 'none';
+      
+      var allFiles = [];
+      blogFiles.forEach(function(f) {
+        if (f.type === 'file' && f.name.endsWith('.md')) {
+          f._folder = 'blog';
+          f._url = '/blog/' + f.name.replace('.md', '') + '/';
+          allFiles.push(f);
+        }
+      });
+      hiddenFiles.forEach(function(f) {
+        if (f.type === 'file' && f.name.endsWith('.md')) {
+          f._folder = 'hidden';
+          f._url = '/secret/' + f.name.replace('.md', '') + '/';
+          allFiles.push(f);
+        }
+      });
+      
+      allFiles.sort(function(a, b) { return b.name.localeCompare(a.name); });
+      
+      if (!allFiles.length) {
+        container.innerHTML = '<p style="color:#999">暂无文章</p>';
+        return;
+      }
+      
+      var html = '<div style="display:flex;flex-direction:column;gap:0.5rem;">';
+      for (var i = 0; i < allFiles.length; i++) {
+        var f = allFiles[i];
+        var label = f._folder === 'hidden' ? '<span style="background:#cc0000;color:#fff;padding:0.1rem 0.4rem;font-size:0.75rem;margin-right:0.5rem;">隐藏</span>' : '';
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.6rem;border:1px solid #e0e0e0;gap:0.5rem;">' +
+          '<div style="display:flex;align-items:center;overflow:hidden;flex:1;">' + label + '<a href="' + f._url + '" target="_blank" style="font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + f.name + '</a></div>' +
+          '<button class="del-btn" data-slug="' + f.name + '" data-folder="' + f._folder + '" style="padding:0.4rem 1rem;background:#cc0000;color:#fff;border:none;cursor:pointer;font-weight:700;flex-shrink:0;font-size:1rem;min-height:40px;">删除</button>' +
+        '</div>';
+      }
+      html += '</div>';
+      container.innerHTML = html;
+      
+      container.addEventListener('click', function(e) {
+        if (e.target.classList.contains('del-btn')) {
+          var slug = e.target.getAttribute('data-slug');
+          var folder = e.target.getAttribute('data-folder');
+          if (!confirm('确定删除 "' + slug + '" 吗？')) return;
+          if (!pwdInput || !pwdInput.value) { alert('密码信息缺失'); return; }
+          
+          e.target.disabled = true;
+          e.target.textContent = '删除中...';
+          
+          fetch('/api/delete-post', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ slug: slug, folder: folder, password: pwdInput.value })
+          })
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            if (!data.success) throw new Error(data.error);
+            alert('删除成功，1-2 分钟后生效');
+            e.target.parentElement.remove();
+          })
+          .catch(function(err) {
+            alert('删除失败: ' + err.message);
+            e.target.disabled = false;
+            e.target.textContent = '删除';
+          });
+        }
+      });
+    }).catch(function() {
+      loading.textContent = '加载失败，请刷新';
+    });
+  }
+</script>
