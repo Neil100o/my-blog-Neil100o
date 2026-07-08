@@ -1,3 +1,19 @@
+async function getLocationFromIP(ip) {
+  try {
+    if (!ip || ip === 'unknown') return '';
+    const res = await fetch('https://ipinfo.io/' + ip + '/json');
+    if (!res.ok) return '';
+    const data = await res.json();
+    const parts = [];
+    if (data.city) parts.push(data.city);
+    if (data.region) parts.push(data.region);
+    if (data.country) parts.push(data.country);
+    return parts.join(', ');
+  } catch (e) {
+    return '';
+  }
+}
+
 export async function onRequest(context) {
   try {
     const { request, env } = context;
@@ -95,6 +111,27 @@ export async function onRequest(context) {
           }
         } catch (mailErr) {
           console.error('Mail send failed:', mailErr);
+        }
+      }
+
+      // 记录评论者来源
+      if (env.DB) {
+        try {
+          const commentIP = request.headers.get('CF-Connecting-IP') || 
+                     request.headers.get('X-Forwarded-For')?.split(',')[0]?.trim() || 
+                     'unknown';
+          const commentLocation = await getLocationFromIP(commentIP);
+          await env.DB.prepare(
+            'INSERT INTO access_logs (ip, path, user_agent, referrer, country) VALUES (?, ?, ?, ?, ?)'
+          ).bind(
+            commentIP,
+            path,
+            request.headers.get('User-Agent') || '',
+            request.headers.get('Referer') || '',
+            commentLocation
+          ).run();
+        } catch (logErr) {
+          console.error('Log comment source failed:', logErr);
         }
       }
 
