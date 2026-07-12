@@ -69,7 +69,7 @@ import Layout from '../layouts/BlogPost.astro';
       var imgStyle = i === 0 ? 'max-height:400px;object-fit:cover;' : '';
       
       html += '<li style="width: ' + width + '; margin-bottom: 1rem;">';
-      html += '<a href="/collection/' + post.id + '/" style="display:block;text-decoration:none;color:#000;">';
+      html += '<a href="/whispers/' + post.id + '/" style="display:block;text-decoration:none;color:#000;">';
       if (post.heroImage) {
         html += '<img src="' + post.heroImage + '" alt="" style="width:100%;border-radius:12px;margin-bottom:0.5rem;' + imgStyle + '" />';
       }

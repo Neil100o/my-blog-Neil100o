@@ -1,6 +1,6 @@
 (function() {
   var path = location.pathname;
-  if (!path.startsWith('/collection')) return;
+  if (!path.startsWith('/whispers')) return;
   try {
     fetch('/api/log-access', {
       method: 'POST',

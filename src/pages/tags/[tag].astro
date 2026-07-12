@@ -46,7 +46,7 @@ const sortedPosts = posts.sort((a, b) => {
     <ul style="display: flex; flex-wrap: wrap; gap: 2rem; list-style: none; margin: 0; padding: 0;">
       {sortedPosts.map((post) => (
         <li style="width: calc(50% - 1rem);">
-          <a href={post.type === 'hidden' ? `/collection/${post.id}/` : `/blog/${post.id}/`} style="display: block; text-decoration: none; color: #000;">
+          <a href={post.type === 'hidden' ? `/whispers/${post.id}/` : `/blog/${post.id}/`} style="display: block; text-decoration: none; color: #000;">"display: block; text-decoration: none; color: #000;">
             {post.heroImage && (
               <img src={post.heroImage} alt="" style="width: 100%; border-radius: 12px; margin-bottom: 0.5rem;" />
             )}

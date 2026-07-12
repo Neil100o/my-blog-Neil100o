@@ -143,8 +143,8 @@
       PIXI.spine.Spine.globalAutoUpdate = true;
       doll.autoUpdate = true;
       
-      // 8. 播放行走动画（循环）
-      doll.state.setAnimationByName(0, "move", true);
+      // 8. 播放等待动画（循环）
+      doll.state.setAnimationByName(0, "wait", true);
       
       spineLoaded = true;
       console.log('Spine 2.1 加载成功');
@@ -334,7 +334,7 @@
         if (data.key) {
           sessionStorage.setItem('sk_', data.key);
           localStorage.setItem('sk_', data.key);
-          location.href = '/collection/';
+          location.href = '/whispers/';
         } else {
           submitBtn.disabled = false;
           submitBtn.textContent = '进入';
