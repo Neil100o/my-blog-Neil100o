@@ -43,6 +43,17 @@
   wrapper.style.cssText = 'position:fixed;width:' + PET_WIDTH + 'px;height:' + PET_HEIGHT + 'px;z-index:9998;pointer-events:none;overflow:hidden;';
   document.body.appendChild(wrapper);
   
+  // 创建加载动画
+  var loader = document.createElement('div');
+  loader.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:40px;height:40px;pointer-events:none;';
+  loader.innerHTML = '<div style="width:100%;height:100%;border:3px solid #eee;border-top-color:#cc0000;border-radius:50%;animation:pet-spin 0.8s linear infinite;"></div>';
+  wrapper.appendChild(loader);
+  
+  // 添加旋转动画样式
+  var style = document.createElement('style');
+  style.textContent = '@keyframes pet-spin { to { transform: rotate(360deg); } }';
+  document.head.appendChild(style);
+  
   initPosition();
   wrapper.style.left = x + 'px';
   wrapper.style.top = y + 'px';
@@ -157,6 +168,11 @@
       doll.state.setAnimationByName(0, "move", true);
       currentAnim = 'move';
       
+      // 隐藏加载动画
+      if (loader) {
+        loader.style.display = 'none';
+      }
+      
       // 启动状态切换循环
       scheduleNextStop();
       
@@ -171,6 +187,7 @@
   
   // 回退：显示静态图
   function showFallback() {
+    if (loader) loader.style.display = 'none';
     wrapper.innerHTML = '';
     var img = document.createElement('img');
     img.src = '/ak74m.png';
