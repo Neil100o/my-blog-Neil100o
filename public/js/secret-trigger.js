@@ -53,7 +53,8 @@
     });
   }
   
-  // 尝试多个 Spine 版本
+  // 尝试多个 Spine 版本（3.8 优先，因为 JSON 是 3.8 的）
+  var spineVersions = ['3.8', '4.0', '4.1', '4.2'];
   var spineVersions = ['4.2', '4.1', '4.0', '3.8'];
   var versionIndex = 0;
   
