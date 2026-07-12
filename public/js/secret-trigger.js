@@ -3,7 +3,6 @@
   var PET_VIDEO_SRC = '/pet.webm';
   var PET_WIDTH = 560;
   var PET_HEIGHT = 420;
-  var PET_HEIGHT = 210;
   var SPEED_MIN = 0.12;
   var SPEED_MAX = 0.35;
   var EDGE_MARGIN = 40;
