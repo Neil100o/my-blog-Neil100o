@@ -131,9 +131,9 @@
       // 计算缩放使角色适应容器
       var skeletonWidth = skeletonData.width || 100;
       var skeletonHeight = skeletonData.height || 100;
-      var scaleX = (PET_WIDTH * 0.8) / skeletonWidth;
-      var scaleY = (PET_HEIGHT * 0.8) / skeletonHeight;
-      var scale = Math.min(scaleX, scaleY, 1.0);
+      var scaleX = (PET_WIDTH * 0.6) / skeletonWidth;
+      var scaleY = (PET_HEIGHT * 0.6) / skeletonHeight;
+      var scale = Math.min(scaleX, scaleY, 0.7);
       doll.scale.set(scale);
       
       // 6. 添加到舞台
@@ -143,8 +143,8 @@
       PIXI.spine.Spine.globalAutoUpdate = true;
       doll.autoUpdate = true;
       
-      // 8. 播放等待动画（循环）
-      doll.state.setAnimationByName(0, "wait", true);
+      // 8. 播放行走动画（循环）
+      doll.state.setAnimationByName(0, "move", true);
       
       spineLoaded = true;
       console.log('Spine 2.1 加载成功');
