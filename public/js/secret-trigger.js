@@ -123,8 +123,6 @@
       var skeletonData = skeletonJsonParser.readSkeletonData(spineJson, "Doll");
       
       // 4. 创建 Spine 实例
-      // 修复 Spine 2.1 yDown 坐标系问题（防止腿部反向）
-      PIXI.spine.SpineRuntime.Bone.yDown = true;
       doll = new PIXI.spine.Spine(skeletonData);
       
       // 5. 设置位置和缩放（居中）
@@ -145,8 +143,8 @@
       PIXI.spine.Spine.globalAutoUpdate = true;
       doll.autoUpdate = true;
       
-      // 8. 播放等待动画（循环）
-      doll.state.setAnimationByName(0, "wait", true);
+      // 8. 播放行走动画（循环）
+      doll.state.setAnimationByName(0, "move", true);
       
       spineLoaded = true;
       console.log('Spine 2.1 加载成功');
