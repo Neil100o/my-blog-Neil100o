@@ -14,6 +14,16 @@
   var spineLoaded = false;
   var doll = null;
   var app = null;
+  var currentAnim = 'move'; // 当前动画状态
+  var stopTimer = null;     // 停止定时器
+  var moveTimer = null;     // 移动定时器
+  
+  // 动画切换
+  function setAnimation(name) {
+    if (!doll || !spineLoaded || currentAnim === name) return;
+    currentAnim = name;
+    doll.state.setAnimationByName(0, name, true);
+  }
   
   // 初始化位置（随机在页面边缘）
   function initPosition() {
@@ -145,6 +155,10 @@
       
       // 8. 播放行走动画（循环）
       doll.state.setAnimationByName(0, "move", true);
+      currentAnim = 'move';
+      
+      // 启动状态切换循环
+      scheduleNextStop();
       
       spineLoaded = true;
       console.log('Spine 2.1 加载成功');
@@ -192,6 +206,37 @@
     var speed = SPEED_MIN + Math.random() * (SPEED_MAX - SPEED_MIN);
     var angle = Math.random() * Math.PI * 2;
     return { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed };
+  }
+  
+  // 安排下一次停止
+  function scheduleNextStop() {
+    if (stopTimer) clearTimeout(stopTimer);
+    if (moveTimer) clearTimeout(moveTimer);
+    
+    // 2-6秒后随机停止
+    var moveDuration = 2000 + Math.random() * 4000;
+    stopTimer = setTimeout(function() {
+      if (modalOpen) { scheduleNextStop(); return; }
+      
+      // 停止移动，切换到 wait 动画
+      isMoving = false;
+      setAnimation('wait');
+      
+      // 1-3秒后恢复移动
+      var stopDuration = 1000 + Math.random() * 2000;
+      moveTimer = setTimeout(function() {
+        if (modalOpen) { scheduleNextStop(); return; }
+        
+        // 恢复移动，切换到 move 动画
+        var s = randomSpeed();
+        vx = s.x;
+        vy = s.y;
+        isMoving = true;
+        setAnimation('move');
+        
+        scheduleNextStop();
+      }, stopDuration);
+    }, moveDuration);
   }
   
   var speed = randomSpeed();
@@ -356,10 +401,12 @@
       overlay.remove();
       modalOpen = false;
       isMoving = true;
+      setAnimation('move');
       var s = randomSpeed();
       vx = s.x;
       vy = s.y;
       requestAnimationFrame(move);
+      scheduleNextStop();
     });
     
     // Enter 键
