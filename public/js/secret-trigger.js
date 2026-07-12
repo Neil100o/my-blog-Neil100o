@@ -12,6 +12,8 @@
   var isMoving = true;
   var modalOpen = false;
   var spineLoaded = false;
+  var doll = null;
+  var app = null;
   
   // 初始化位置（随机在页面边缘）
   function initPosition() {
@@ -35,14 +37,7 @@
   wrapper.style.left = x + 'px';
   wrapper.style.top = y + 'px';
   
-  // 加载 Spine Web Player
-  function loadCSS(href) {
-    var link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = href;
-    document.head.appendChild(link);
-  }
-  
+  // 加载脚本
   function loadScript(src) {
     return new Promise(function(resolve, reject) {
       var script = document.createElement('script');
@@ -53,63 +48,111 @@
     });
   }
   
-  // 尝试多个 Spine 版本（3.8 优先，因为 JSON 是 3.8 的）
-  var spineVersions = ['3.8', '4.0', '4.1', '4.2'];
-  var spineVersions = ['4.2', '4.1', '4.0', '3.8'];
-  var versionIndex = 0;
-  
-  function tryLoadSpine() {
-    if (versionIndex >= spineVersions.length) {
-      console.error('Spine Web Player 加载失败，回退到静态图');
-      showFallback();
-      return;
-    }
-    
-    var ver = spineVersions[versionIndex++];
-    var baseUrl = 'https://unpkg.com/@esotericsoftware/spine-player@' + ver + '.0/dist/';
-    
-    loadCSS(baseUrl + 'spine-player.css');
-    loadScript(baseUrl + 'spine-player.js')
-      .then(function() {
-        if (typeof spine === 'undefined' || !spine.SpinePlayer) {
-          throw new Error('spine not available');
-        }
-        initSpine();
-      })
-      .catch(function() {
-        tryLoadSpine();
-      });
+  // 加载二进制文件
+  function loadBinary(url) {
+    return fetch(url).then(function(r) { return r.arrayBuffer(); });
   }
   
-  function initSpine() {
-    spineLoaded = true;
+  // 加载文本文件
+  function loadText(url) {
+    return fetch(url).then(function(r) { return r.text(); });
+  }
+  
+  // 加载图片
+  function loadImage(url) {
+    return new Promise(function(resolve, reject) {
+      var img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = function() { resolve(img); };
+      img.onerror = reject;
+      img.src = url;
+    });
+  }
+  
+  // 初始化 PixiJS + Spine 2.1
+  function initPixiSpine() {
+    // 创建 PixiJS Application（透明背景）
+    app = new PIXI.Application(PET_WIDTH, PET_HEIGHT, {
+      transparent: true,
+      antialias: true,
+      premultipliedAlpha: true,
+      preserveDrawingBuffer: true,
+      resolution: window.devicePixelRatio || 1,
+      autoResize: true
+    });
     
-    // 创建 Spine 播放器容器
-    var playerContainer = document.createElement('div');
-    playerContainer.style.cssText = 'width:100%;height:100%;';
-    wrapper.appendChild(playerContainer);
+    var canvas = app.view;
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    canvas.style.display = 'block';
+    wrapper.appendChild(canvas);
     
-    try {
-      var player = new spine.SpinePlayer(playerContainer, {
-        jsonUrl: '/ak74m.json',
-        atlasUrl: '/ak74m.atlas',
-        backgroundColor: '#00000000',
-        showControls: false,
-        alpha: true,
-        preserveDrawingBuffer: true,
-        success: function() {
-          var canvas = playerContainer.querySelector('canvas');
-          if (canvas) {
-            canvas.style.width = '100%';
-            canvas.style.height = '100%';
-            canvas.style.pointerEvents = 'none';
-          }
+    // 并行加载所有资源
+    Promise.all([
+      loadBinary('/ak74m.skel'),
+      loadText('/ak74m.atlas'),
+      loadImage('/ak74m.png')
+    ]).then(function(results) {
+      var skelBuffer = results[0];
+      var atlasText = results[1];
+      var pngImage = results[2];
+      
+      // 1. 将二进制 .skel 转为 JSON
+      var skelBinary = new SkeletonBinary();
+      skelBinary.data = new Uint8Array(skelBuffer);
+      skelBinary.initJson();
+      var spineJson = skelBinary.json;
+      
+      // 2. 创建 Atlas - 修复大小写不匹配问题
+      var spineAtlas = new PIXI.spine.SpineRuntime.Atlas(
+        atlasText,
+        function(line, callback) {
+          // atlas 中引用的是 "AK74M.png"，但我们加载的是 "ak74m.png"
+          // 忽略 line 参数，直接返回已加载的纹理
+          callback(new PIXI.BaseTexture(pngImage));
+        },
+        function(atlas) {
+          // atlas 加载完成
+          console.log('Atlas 加载完成');
         }
-      });
-    } catch (e) {
-      console.error('Spine init failed:', e);
+      );
+      
+      // 3. 解析 Skeleton Data
+      var attachmentParser = new PIXI.spine.SpineRuntime.AtlasAttachmentParser(spineAtlas);
+      var skeletonJsonParser = new PIXI.spine.SpineRuntime.SkeletonJsonParser(attachmentParser);
+      var skeletonData = skeletonJsonParser.readSkeletonData(spineJson, "Doll");
+      
+      // 4. 创建 Spine 实例
+      doll = new PIXI.spine.Spine(skeletonData);
+      
+      // 5. 设置位置和缩放（居中）
+      doll.position.set(PET_WIDTH / 2, PET_HEIGHT * 0.75);
+      
+      // 计算缩放使角色适应容器
+      var skeletonWidth = skeletonData.width || 100;
+      var skeletonHeight = skeletonData.height || 100;
+      var scaleX = (PET_WIDTH * 0.8) / skeletonWidth;
+      var scaleY = (PET_HEIGHT * 0.8) / skeletonHeight;
+      var scale = Math.min(scaleX, scaleY, 1.0);
+      doll.scale.set(scale);
+      
+      // 6. 添加到舞台
+      app.stage.addChild(doll);
+      
+      // 7. 启用自动更新
+      PIXI.spine.Spine.globalAutoUpdate = true;
+      doll.autoUpdate = true;
+      
+      // 8. 播放等待动画（循环）
+      doll.state.setAnimationByName(0, "wait", true);
+      
+      spineLoaded = true;
+      console.log('Spine 2.1 加载成功');
+      
+    }).catch(function(err) {
+      console.error('Spine 加载失败:', err);
       showFallback();
-    }
+    });
   }
   
   // 回退：显示静态图
@@ -121,8 +164,15 @@
     wrapper.appendChild(img);
   }
   
-  // 开始加载 Spine
-  tryLoadSpine();
+  // 按顺序加载依赖，然后初始化
+  loadScript('/spine-lib/js/pixi.js')
+    .then(function() { return loadScript('/spine-lib/js/pixi-spine-sjzs.js'); })
+    .then(function() { return loadScript('/spine-lib/js/skb.js'); })
+    .then(function() { initPixiSpine(); })
+    .catch(function(err) {
+      console.error('依赖加载失败:', err);
+      showFallback();
+    });
   
   // 随机速度
   function randomSpeed() {
@@ -164,10 +214,15 @@
     wrapper.style.left = x + 'px';
     wrapper.style.top = y + 'px';
     
-    // 水平翻转
-    var content = wrapper.firstElementChild;
-    if (content) {
-      content.style.transform = vx > 0 ? 'scaleX(1)' : 'scaleX(-1)';
+    // 水平翻转（Spine 方式）
+    if (doll && spineLoaded) {
+      doll.skeleton.flipX = vx < 0;
+    } else {
+      // 回退：CSS 翻转
+      var content = wrapper.firstElementChild;
+      if (content && content.tagName !== 'CANVAS') {
+        content.style.transform = vx > 0 ? 'scaleX(1)' : 'scaleX(-1)';
+      }
     }
     
     requestAnimationFrame(move);
@@ -182,17 +237,28 @@
   
   // Hover 效果
   hitArea.onmouseenter = function() {
-    var content = wrapper.firstElementChild;
-    if (content) {
-      content.style.transform = (vx > 0 ? 'scaleX(1)' : 'scaleX(-1)') + ' scale(1.1)';
+    if (doll && spineLoaded) {
+      // Spine 缩放通过 scale 实现
+      var baseScale = doll.scale.x;
+      doll.scale.set(baseScale * 1.1);
+    } else {
+      var content = wrapper.firstElementChild;
+      if (content) {
+        content.style.transform = (vx > 0 ? 'scaleX(1)' : 'scaleX(-1)') + ' scale(1.1)';
+      }
     }
     wrapper.style.opacity = '1';
   };
   hitArea.onmouseleave = function() {
     if (!modalOpen) {
-      var content = wrapper.firstElementChild;
-      if (content) {
-        content.style.transform = vx > 0 ? 'scaleX(1)' : 'scaleX(-1)';
+      if (doll && spineLoaded) {
+        var baseScale = doll.scale.x / 1.1;
+        doll.scale.set(baseScale);
+      } else {
+        var content = wrapper.firstElementChild;
+        if (content) {
+          content.style.transform = vx > 0 ? 'scaleX(1)' : 'scaleX(-1)';
+        }
       }
       wrapper.style.opacity = '0.9';
     }
