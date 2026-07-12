@@ -26,6 +26,10 @@
     }
   }
   
+  // 创建小宠物容器 - 只让小人本体区域可点击
+  var wrapper = document.createElement('div');
+  wrapper.style.cssText = 'position:fixed;width:' + PET_WIDTH + 'px;height:' + PET_HEIGHT + 'px;z-index:9998;pointer-events:none;';
+  
   // 创建小宠物 - 用 video 标签
   var pet = document.createElement('video');
   pet.src = PET_VIDEO_SRC;
@@ -36,11 +40,13 @@
   pet.disablePictureInPicture = true;
   pet.disableRemotePlayback = true;
   pet.controls = false;
-  pet.style.cssText = 'position:fixed;width:' + PET_WIDTH + 'px;height:' + PET_HEIGHT + 'px;cursor:pointer;z-index:9998;user-select:none;transition:transform 0.2s;opacity:0.9;object-fit:contain;pointer-events:auto;';
+  pet.style.cssText = 'width:100%;height:100%;object-fit:contain;pointer-events:none;user-select:none;';
   pet.setAttribute('webkit-playsinline', 'true');
   pet.setAttribute('x5-playsinline', 'true');
   pet.setAttribute('x5-video-player-type', 'h5');
-  document.body.appendChild(pet);
+  
+  wrapper.appendChild(pet);
+  document.body.appendChild(wrapper);
   
   initPosition();
   
@@ -81,8 +87,8 @@
       vy = s.y;
     }
     
-    pet.style.left = x + 'px';
-    pet.style.top = y + 'px';
+    wrapper.style.left = x + 'px';
+    wrapper.style.top = y + 'px';
     pet.style.transform = vx > 0 ? 'scaleX(1)' : 'scaleX(-1)';
     
     requestAnimationFrame(move);
@@ -90,12 +96,17 @@
   
   requestAnimationFrame(move);
   
+  // 创建一个精确的小人点击区域（覆盖在视频中央）
+  var hitArea = document.createElement('div');
+  hitArea.style.cssText = 'position:absolute;left:35%;top:20%;width:30%;height:60%;cursor:pointer;z-index:1;pointer-events:auto;';
+  wrapper.appendChild(hitArea);
+  
   // Hover 效果
-  pet.onmouseenter = function() {
+  hitArea.onmouseenter = function() {
     pet.style.transform = (vx > 0 ? 'scaleX(1)' : 'scaleX(-1)') + ' scale(1.1)';
     pet.style.opacity = '1';
   };
-  pet.onmouseleave = function() {
+  hitArea.onmouseleave = function() {
     if (!modalOpen) {
       pet.style.transform = vx > 0 ? 'scaleX(1)' : 'scaleX(-1)';
       pet.style.opacity = '0.9';
@@ -103,7 +114,7 @@
   };
   
   // 点击弹出输入框
-  pet.addEventListener('click', function(e) {
+  hitArea.addEventListener('click', function(e) {
     e.stopPropagation();
     if (modalOpen) return;
     modalOpen = true;
