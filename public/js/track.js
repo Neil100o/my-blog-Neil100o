@@ -1,6 +1,6 @@
 (function() {
   var path = location.pathname;
-  if (!path.startsWith('/secret')) return;
+  if (!path.startsWith('/collection')) return;
   try {
     fetch('/api/log-access', {
       method: 'POST',

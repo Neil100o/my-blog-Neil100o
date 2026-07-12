@@ -6,3 +6,10 @@ compatibility_date = "2026-05-28"
 binding = "DB"
 database_name = "myblog-comments"
 database_id = "592ff6e6-b34a-45fb-9fd8-f27c63efeb41"
+
+[[kv_namespaces]]
+binding = "SECRET_KV"
+id = "3513851f1d4b4d3195f6f2ab5d661aeb"
+binding = "DB"
+database_name = "myblog-comments"
+database_id = "592ff6e6-b34a-45fb-9fd8-f27c63efeb41"

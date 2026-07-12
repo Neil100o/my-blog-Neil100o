@@ -112,7 +112,7 @@ import Layout from '../../layouts/BlogPost.astro';
       hiddenFiles.forEach(function(f) {
         if (f.type === 'file' && f.name.endsWith('.md')) {
           f._folder = 'hidden';
-          f._url = '/secret/' + f.name.replace('.md', '') + '/';
+          f._url = '/collection/' + f.name.replace('.md', '') + '/';
           allFiles.push(f);
         }
       });

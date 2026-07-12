@@ -18,7 +18,27 @@
     div.style.cssText = 'position:fixed;bottom:2rem;right:2rem;background:#000;color:#fff;padding:1rem 1.5rem;border:2px solid #cc0000;cursor:pointer;font-weight:800;font-size:0.9rem;letter-spacing:0.05em;text-transform:uppercase;z-index:9999;transition:all 0.3s;';
     div.onmouseenter = function() { div.style.background = '#cc0000'; };
     div.onmouseleave = function() { div.style.background = '#000'; };
-    div.onclick = function() { location.href = '/secret/'; };
+    div.onclick = function() { 
+      // 调用 API 获取秘钥
+      fetch('/api/secret-unlock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.key) {
+          sessionStorage.setItem('sk_', data.key);
+          localStorage.setItem('sk_', data.key);
+        }
+        location.href = '/collection/';
+      })
+      .catch(function() {
+        // API 失败，回退到旧方式
+        sessionStorage.setItem('gatePass', Date.now().toString());
+        location.href = '/collection/';
+      });
+    };
     document.body.appendChild(div);
   }
 
