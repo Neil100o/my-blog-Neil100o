@@ -87,32 +87,11 @@ import Layout from '../layouts/BlogPost.astro';
   
   // 主逻辑
   var key = getKey();
+  console.log('collection page - key:', key ? 'exists' : 'missing');
   
   if (!key) {
-    // 没有秘钥，检查旧的 gatePass（兼容过渡）
-    var gatePass = sessionStorage.getItem('gatePass');
-    if (gatePass) {
-      // 有旧验证，生成新秘钥
-      fetch('/api/secret-unlock', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({})
-      })
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        if (data.key) {
-          saveKey(data.key);
-          loadPosts(data.key);
-        } else {
-          showBlocked();
-        }
-      })
-      .catch(function() { showBlocked(); });
-    } else {
-      showBlocked();
-    }
+    showBlocked();
   } else {
-    // 有秘钥，验证并加载
     loadPosts(key);
   }
   

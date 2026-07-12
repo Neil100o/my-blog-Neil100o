@@ -1,4 +1,4 @@
-// 生成随机秘钥
+// 生成随机访问 key
 function generateKey() {
   var arr = new Uint8Array(16);
   crypto.getRandomValues(arr);
@@ -20,21 +20,26 @@ export async function onRequest(context) {
     }
     
     const body = await request.json();
+    const password = body.password || '';
     
-    // 可选：验证解谜答案（如果提供了答案）
-    if (body.answers) {
-      // 这里可以验证 ARG 答案，暂时跳过，前端验证即可
+    // 从环境变量读取秘钥，必须设置 SECRET_PASSWORD
+    if (!env.SECRET_PASSWORD) {
+      return Response.json({ error: 'SECRET_PASSWORD not configured' }, { status: 500 });
+    }
+    const CORRECT_PASSWORD = env.SECRET_PASSWORD;
+    
+    if (password !== CORRECT_PASSWORD) {
+      return Response.json({ error: 'Invalid password' }, { status: 401 });
     }
     
-    // 生成秘钥
+    // 验证通过，生成访问 key
     const key = generateKey();
     const now = Date.now();
     
-    // 写入 KV，7 天过期（用 KV 的 expiration_ttl）
     await env.SECRET_KV.put(key, JSON.stringify({
       created: now,
       ip: request.headers.get('CF-Connecting-IP') || 'unknown'
-    }), { expirationTtl: 604800 }); // 7 天 = 604800 秒
+    }), { expirationTtl: 604800 }); // 7 天过期
     
     return Response.json({ success: true, key: key });
   } catch (e) {
