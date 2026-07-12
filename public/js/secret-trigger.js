@@ -1,11 +1,11 @@
 (function() {
   // ==================== 配置 ====================
   var PET_VIDEO_SRC = '/pet.webm';
-  var PET_WIDTH = 160;   // 视频宽度
-  var PET_HEIGHT = 120;  // 视频高度
-  var SPEED_MIN = 0.15;  // 更慢
-  var SPEED_MAX = 0.5;
-  var EDGE_MARGIN = 30;
+  var PET_WIDTH = 280;   // 放大
+  var PET_HEIGHT = 210;
+  var SPEED_MIN = 0.12;
+  var SPEED_MAX = 0.35;
+  var EDGE_MARGIN = 40;
   
   // 状态
   var x = 0, y = 0;
@@ -26,7 +26,7 @@
     }
   }
   
-  // 创建小宠物 - 用 video 标签，隐藏控件
+  // 创建小宠物 - 用 video 标签
   var pet = document.createElement('video');
   pet.src = PET_VIDEO_SRC;
   pet.autoplay = true;
@@ -37,7 +37,6 @@
   pet.disableRemotePlayback = true;
   pet.controls = false;
   pet.style.cssText = 'position:fixed;width:' + PET_WIDTH + 'px;height:' + PET_HEIGHT + 'px;cursor:pointer;z-index:9998;user-select:none;transition:transform 0.2s;opacity:0.9;object-fit:contain;pointer-events:auto;';
-  // 隐藏所有视频控件
   pet.setAttribute('webkit-playsinline', 'true');
   pet.setAttribute('x5-playsinline', 'true');
   pet.setAttribute('x5-video-player-type', 'h5');
@@ -75,7 +74,7 @@
     if (y <= EDGE_MARGIN) { y = EDGE_MARGIN; vy = Math.abs(vy); }
     if (y >= h - PET_HEIGHT - EDGE_MARGIN) { y = h - PET_HEIGHT - EDGE_MARGIN; vy = -Math.abs(vy); }
     
-    // 偶尔随机变向（概率更低）
+    // 偶尔随机变向
     if (Math.random() < 0.002) {
       var s = randomSpeed();
       vx = s.x;
@@ -84,7 +83,6 @@
     
     pet.style.left = x + 'px';
     pet.style.top = y + 'px';
-    // 水平翻转朝向移动方向
     pet.style.transform = vx > 0 ? 'scaleX(1)' : 'scaleX(-1)';
     
     requestAnimationFrame(move);
@@ -94,7 +92,7 @@
   
   // Hover 效果
   pet.onmouseenter = function() {
-    pet.style.transform = (vx > 0 ? 'scaleX(1)' : 'scaleX(-1)') + ' scale(1.15)';
+    pet.style.transform = (vx > 0 ? 'scaleX(1)' : 'scaleX(-1)') + ' scale(1.1)';
     pet.style.opacity = '1';
   };
   pet.onmouseleave = function() {
@@ -118,10 +116,13 @@
     
     // 输入框
     var box = document.createElement('div');
-    box.style.cssText = 'background:#fff;border:3px solid #000;padding:2rem;max-width:380px;width:90%;box-shadow:8px 8px 0 #000;';
+    box.style.cssText = 'background:#fff;border:3px solid #000;padding:2rem;max-width:400px;width:90%;box-shadow:8px 8px 0 #000;';
     box.innerHTML = '<h3 style="margin:0 0 1rem 0;border-bottom:3px solid #cc0000;padding-bottom:0.5rem;font-size:1.3rem;">🔐 入口</h3>' +
       '<p style="color:#666;margin-bottom:1.2rem;font-size:0.9rem;line-height:1.6;">如果你有秘钥，可以进入秘密空间。</p>' +
-      '<input type="password" id="pet-pwd" placeholder="输入秘钥" style="width:100%;padding:0.8rem;border:2px solid #000;font-size:1rem;margin-bottom:1rem;box-sizing:border-box;" />' +
+      '<div style="position:relative;margin-bottom:1rem;">' +
+        '<input type="password" id="pet-pwd" placeholder="输入秘钥" style="width:100%;padding:0.8rem;border:2px solid #000;font-size:1rem;box-sizing:border-box;padding-right:3rem;" />' +
+        '<button id="pet-toggle" type="button" style="position:absolute;right:0.5rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1.2rem;padding:0.2rem;">👁</button>' +
+      '</div>' +
       '<button id="pet-submit" style="width:100%;padding:0.9rem;background:#000;color:#fff;border:2px solid #000;font-weight:800;cursor:pointer;font-size:1rem;">进入</button>' +
       '<button id="pet-close" style="width:100%;padding:0.7rem;background:#fff;color:#000;border:2px solid #000;font-weight:700;cursor:pointer;margin-top:0.5rem;font-size:0.9rem;">关闭</button>';
     
@@ -129,8 +130,16 @@
     document.body.appendChild(overlay);
     
     var pwdInput = document.getElementById('pet-pwd');
+    var toggleBtn = document.getElementById('pet-toggle');
     var submitBtn = document.getElementById('pet-submit');
     var closeBtn = document.getElementById('pet-close');
+    
+    // 显示/隐藏密码
+    toggleBtn.addEventListener('click', function() {
+      var isPassword = pwdInput.type === 'password';
+      pwdInput.type = isPassword ? 'text' : 'password';
+      toggleBtn.textContent = isPassword ? '🙈' : '👁';
+    });
     
     // 提交
     submitBtn.addEventListener('click', function() {
