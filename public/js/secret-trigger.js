@@ -123,6 +123,8 @@
       var skeletonData = skeletonJsonParser.readSkeletonData(spineJson, "Doll");
       
       // 4. 创建 Spine 实例
+      // 修复 Spine 2.1 yDown 坐标系问题（防止腿部反向）
+      spine.Bone.yDown = true;
       doll = new PIXI.spine.Spine(skeletonData);
       
       // 5. 设置位置和缩放（居中）
