@@ -166,6 +166,19 @@
   
   // 按顺序加载依赖，然后初始化
   loadScript('/spine-lib/js/pixi.js')
+    .then(function() {
+      // 确保 PIXI 完全初始化
+      if (typeof PIXI === 'undefined' || !PIXI.BLEND_MODES) {
+        return new Promise(function(resolve) {
+          var check = setInterval(function() {
+            if (typeof PIXI !== 'undefined' && PIXI.BLEND_MODES) {
+              clearInterval(check);
+              resolve();
+            }
+          }, 50);
+        });
+      }
+    })
     .then(function() { return loadScript('/spine-lib/js/pixi-spine-sjzs.js'); })
     .then(function() { return loadScript('/spine-lib/js/skb.js'); })
     .then(function() { initPixiSpine(); })

@@ -2187,7 +2187,7 @@ var Texture = function(gl, width, height, format, type)
 	 *
 	 * @member {Boolean}
 	 */
-	this.premultiplyAlpha = test_PMA_Texture;
+	this.premultiplyAlpha = true;
 
 	/**
 	 * The width of texture
@@ -2230,7 +2230,7 @@ Texture.prototype.upload = function(source)
 	var gl = this.gl;
   // console.log(this, this.premultiplyAlpha);
 	// gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, this.premultiplyAlpha);
-	gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, test_PMA_glstore);
+		gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
 
 	var newWidth = source.videoWidth || source.width;
 	var newHeight = source.videoHeight || source.height;
@@ -2292,7 +2292,7 @@ Texture.prototype.uploadData = function(data, width, height)
 	// console.log(this, this.premultiplyAlpha);
 	// what type of data?
 	// gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, this.premultiplyAlpha);
-  gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, test_PMA_glstore);
+  	gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
 
 	if(width !== this.width || height !== this.height)
 	{
@@ -25536,7 +25536,7 @@ var BaseTexture = function (_EventEmitter) {
          * @member {boolean}
          * @default true
          */
-        _this.premultipliedAlpha = test_PMA_base;
+        _this.premultipliedAlpha = true;
 
         /**
          * The image url of the texture
