@@ -1,8 +1,8 @@
 (function() {
   // ==================== 配置 ====================
   var PET_GIF_SRC = '/pet.gif';
-  var PET_WIDTH = 560;
-  var PET_HEIGHT = 420;
+  var PET_WIDTH = 263;
+  var PET_HEIGHT = 260;
   var SPEED_MIN = 0.12;
   var SPEED_MAX = 0.35;
   var EDGE_MARGIN = 40;
