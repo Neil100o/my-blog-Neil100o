@@ -32,6 +32,10 @@ import Layout from '../layouts/BlogPost.astro';
     return sessionStorage.getItem(SECRET_KEY) || localStorage.getItem(SECRET_KEY);
   }
   
+  function showMain() {
+    return sessionStorage.getItem(SECRET_KEY) || localStorage.getItem(SECRET_KEY);
+  }
+  
   function saveKey(key) {
     sessionStorage.setItem(SECRET_KEY, key);
     localStorage.setItem(SECRET_KEY, key);
@@ -86,6 +90,7 @@ import Layout from '../layouts/BlogPost.astro';
   }
   
   // 主逻辑
+  var key = getKey();
   var key = getKey();
   console.log('collection page - key:', key ? 'exists' : 'missing');
   
