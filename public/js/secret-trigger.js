@@ -1,8 +1,7 @@
 (function() {
   // ==================== 配置 ====================
-  var PET_VIDEO_SRC = '/pet.webm';
-  var PET_WIDTH = 560;
-  var PET_HEIGHT = 420;
+  var PET_WIDTH = 200;
+  var PET_HEIGHT = 200;
   var SPEED_MIN = 0.12;
   var SPEED_MAX = 0.35;
   var EDGE_MARGIN = 40;
@@ -12,6 +11,7 @@
   var vx = 0, vy = 0;
   var isMoving = true;
   var modalOpen = false;
+  var spineLoaded = false;
   
   // 初始化位置（随机在页面边缘）
   function initPosition() {
@@ -26,29 +26,103 @@
     }
   }
   
-  // 创建小宠物容器 - 只让小人本体区域可点击
+  // 创建小宠物容器
   var wrapper = document.createElement('div');
   wrapper.style.cssText = 'position:fixed;width:' + PET_WIDTH + 'px;height:' + PET_HEIGHT + 'px;z-index:9998;pointer-events:none;overflow:hidden;';
-  
-  // 创建小宠物 - 用 video 标签
-  var pet = document.createElement('video');
-  pet.src = PET_VIDEO_SRC;
-  pet.autoplay = true;
-  pet.loop = true;
-  pet.muted = true;
-  pet.playsInline = true;
-  pet.disablePictureInPicture = true;
-  pet.disableRemotePlayback = true;
-  pet.controls = false;
-  pet.style.cssText = 'width:100%;height:100%;object-fit:contain;pointer-events:none;user-select:none;-webkit-appearance:none;outline:none;border:none;background:transparent;';
-  pet.setAttribute('webkit-playsinline', 'true');
-  pet.setAttribute('x5-playsinline', 'true');
-  pet.setAttribute('x5-video-player-type', 'h5');
-  
-  wrapper.appendChild(pet);
   document.body.appendChild(wrapper);
   
   initPosition();
+  wrapper.style.left = x + 'px';
+  wrapper.style.top = y + 'px';
+  
+  // 加载 Spine Web Player
+  function loadCSS(href) {
+    var link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = href;
+    document.head.appendChild(link);
+  }
+  
+  function loadScript(src) {
+    return new Promise(function(resolve, reject) {
+      var script = document.createElement('script');
+      script.src = src;
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+  }
+  
+  // 尝试多个 Spine 版本
+  var spineVersions = ['4.2', '4.1', '4.0', '3.8'];
+  var versionIndex = 0;
+  
+  function tryLoadSpine() {
+    if (versionIndex >= spineVersions.length) {
+      console.error('Spine Web Player 加载失败，回退到静态图');
+      showFallback();
+      return;
+    }
+    
+    var ver = spineVersions[versionIndex++];
+    var baseUrl = 'https://unpkg.com/@esotericsoftware/spine-player@' + ver + '.0/dist/';
+    
+    loadCSS(baseUrl + 'spine-player.css');
+    loadScript(baseUrl + 'spine-player.js')
+      .then(function() {
+        if (typeof spine === 'undefined' || !spine.SpinePlayer) {
+          throw new Error('spine not available');
+        }
+        initSpine();
+      })
+      .catch(function() {
+        tryLoadSpine();
+      });
+  }
+  
+  function initSpine() {
+    spineLoaded = true;
+    
+    // 创建 Spine 播放器容器
+    var playerContainer = document.createElement('div');
+    playerContainer.style.cssText = 'width:100%;height:100%;';
+    wrapper.appendChild(playerContainer);
+    
+    try {
+      var player = new spine.SpinePlayer(playerContainer, {
+        binaryUrl: '/ak74m.skel',
+        atlasUrl: '/ak74m.atlas',
+        backgroundColor: '#00000000',
+        showControls: false,
+        alpha: true,
+        preserveDrawingBuffer: true,
+        success: function() {
+          // 隐藏 Spine 的默认 canvas，提取出来
+          var canvas = playerContainer.querySelector('canvas');
+          if (canvas) {
+            canvas.style.width = '100%';
+            canvas.style.height = '100%';
+            canvas.style.pointerEvents = 'none';
+          }
+        }
+      });
+    } catch (e) {
+      console.error('Spine init failed:', e);
+      showFallback();
+    }
+  }
+  
+  // 回退：显示静态图
+  function showFallback() {
+    wrapper.innerHTML = '';
+    var img = document.createElement('img');
+    img.src = '/ak74m.png';
+    img.style.cssText = 'width:100%;height:100%;object-fit:contain;pointer-events:none;';
+    wrapper.appendChild(img);
+  }
+  
+  // 开始加载 Spine
+  tryLoadSpine();
   
   // 随机速度
   function randomSpeed() {
@@ -89,27 +163,38 @@
     
     wrapper.style.left = x + 'px';
     wrapper.style.top = y + 'px';
-    pet.style.transform = vx > 0 ? 'scaleX(1)' : 'scaleX(-1)';
+    
+    // 水平翻转
+    var content = wrapper.firstElementChild;
+    if (content) {
+      content.style.transform = vx > 0 ? 'scaleX(1)' : 'scaleX(-1)';
+    }
     
     requestAnimationFrame(move);
   }
   
   requestAnimationFrame(move);
   
-  // 创建一个精确的小人点击区域（覆盖在视频中央）
+  // 点击区域（覆盖整个 wrapper）
   var hitArea = document.createElement('div');
-  hitArea.style.cssText = 'position:absolute;left:35%;top:20%;width:30%;height:60%;cursor:pointer;z-index:1;pointer-events:auto;';
+  hitArea.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;cursor:pointer;z-index:1;pointer-events:auto;';
   wrapper.appendChild(hitArea);
   
   // Hover 效果
   hitArea.onmouseenter = function() {
-    pet.style.transform = (vx > 0 ? 'scaleX(1)' : 'scaleX(-1)') + ' scale(1.1)';
-    pet.style.opacity = '1';
+    var content = wrapper.firstElementChild;
+    if (content) {
+      content.style.transform = (vx > 0 ? 'scaleX(1)' : 'scaleX(-1)') + ' scale(1.1)';
+    }
+    wrapper.style.opacity = '1';
   };
   hitArea.onmouseleave = function() {
     if (!modalOpen) {
-      pet.style.transform = vx > 0 ? 'scaleX(1)' : 'scaleX(-1)';
-      pet.style.opacity = '0.9';
+      var content = wrapper.firstElementChild;
+      if (content) {
+        content.style.transform = vx > 0 ? 'scaleX(1)' : 'scaleX(-1)';
+      }
+      wrapper.style.opacity = '0.9';
     }
   };
   
