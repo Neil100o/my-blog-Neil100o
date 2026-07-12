@@ -90,14 +90,13 @@
     
     try {
       var player = new spine.SpinePlayer(playerContainer, {
-        binaryUrl: '/ak74m.skel',
+        jsonUrl: '/ak74m.json',
         atlasUrl: '/ak74m.atlas',
         backgroundColor: '#00000000',
         showControls: false,
         alpha: true,
         preserveDrawingBuffer: true,
         success: function() {
-          // 隐藏 Spine 的默认 canvas，提取出来
           var canvas = playerContainer.querySelector('canvas');
           if (canvas) {
             canvas.style.width = '100%';
