@@ -1,6 +1,6 @@
 (function() {
   // ==================== 配置 ====================
-  var PET_VIDEO_SRC = '/pet.webm';
+  var PET_GIF_SRC = '/pet.gif';
   var PET_WIDTH = 560;
   var PET_HEIGHT = 420;
   var SPEED_MIN = 0.12;
@@ -26,24 +26,14 @@
     }
   }
   
-  // 创建小宠物容器 - 只让小人本体区域可点击
+  // 创建小宠物容器
   var wrapper = document.createElement('div');
-  wrapper.style.cssText = 'position:fixed;width:' + PET_WIDTH + 'px;height:' + PET_HEIGHT + 'px;z-index:9998;pointer-events:none;';
+  wrapper.style.cssText = 'position:fixed;width:' + PET_WIDTH + 'px;height:' + PET_HEIGHT + 'px;z-index:9998;pointer-events:none;overflow:hidden;';
   
-  // 创建小宠物 - 用 video 标签
-  var pet = document.createElement('video');
-  pet.src = PET_VIDEO_SRC;
-  pet.autoplay = true;
-  pet.loop = true;
-  pet.muted = true;
-  pet.playsInline = true;
-  pet.disablePictureInPicture = true;
-  pet.disableRemotePlayback = true;
-  pet.controls = false;
-  pet.style.cssText = 'width:100%;height:100%;object-fit:contain;pointer-events:none;user-select:none;';
-  pet.setAttribute('webkit-playsinline', 'true');
-  pet.setAttribute('x5-playsinline', 'true');
-  pet.setAttribute('x5-video-player-type', 'h5');
+  // 创建小宠物 - 用 img 标签加载 GIF
+  var pet = document.createElement('img');
+  pet.src = PET_GIF_SRC;
+  pet.style.cssText = 'width:100%;height:100%;object-fit:contain;pointer-events:none;user-select:none;display:block;';
   
   wrapper.appendChild(pet);
   document.body.appendChild(wrapper);
@@ -96,7 +86,7 @@
   
   requestAnimationFrame(move);
   
-  // 创建一个精确的小人点击区域（覆盖在视频中央）
+  // 创建一个精确的小人点击区域（覆盖在 GIF 中央）
   var hitArea = document.createElement('div');
   hitArea.style.cssText = 'position:absolute;left:35%;top:20%;width:30%;height:60%;cursor:pointer;z-index:1;pointer-events:auto;';
   wrapper.appendChild(hitArea);
