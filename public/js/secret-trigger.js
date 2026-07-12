@@ -1,21 +1,11 @@
 (function() {
   // ==================== 配置 ====================
-  // 小宠物外观 - 使用视频
   var PET_VIDEO_SRC = '/pet.webm';
-  var PET_SIZE = 80; // 视频尺寸可以比 emoji 大点
-  
-  // 移动速度配置
-  var SPEED_MIN = 0.3;
-  var SPEED_MAX = 1.2;
-  var EDGE_MARGIN = 20;
-  // 小宠物外观
-  var PET_EMOJI = '🐱';
-  var PET_SIZE = 36;
-  
-  // 移动速度配置
-  var SPEED_MIN = 0.3;
-  var SPEED_MAX = 1.2;
-  var EDGE_MARGIN = 20; // 离边缘距离
+  var PET_WIDTH = 160;   // 视频宽度
+  var PET_HEIGHT = 120;  // 视频高度
+  var SPEED_MIN = 0.15;  // 更慢
+  var SPEED_MAX = 0.5;
+  var EDGE_MARGIN = 30;
   
   // 状态
   var x = 0, y = 0;
@@ -27,24 +17,30 @@
   function initPosition() {
     var w = window.innerWidth;
     var h = window.innerHeight;
-    var edge = Math.floor(Math.random() * 4); // 0=上,1=右,2=下,3=左
-    
+    var edge = Math.floor(Math.random() * 4);
     switch (edge) {
-      case 0: x = Math.random() * w; y = EDGE_MARGIN; break;
-      case 1: x = w - PET_SIZE - EDGE_MARGIN; y = Math.random() * h; break;
-      case 2: x = Math.random() * w; y = h - PET_SIZE - EDGE_MARGIN; break;
-      case 3: x = EDGE_MARGIN; y = Math.random() * h; break;
+      case 0: x = Math.random() * (w - PET_WIDTH); y = EDGE_MARGIN; break;
+      case 1: x = w - PET_WIDTH - EDGE_MARGIN; y = Math.random() * (h - PET_HEIGHT); break;
+      case 2: x = Math.random() * (w - PET_WIDTH); y = h - PET_HEIGHT - EDGE_MARGIN; break;
+      case 3: x = EDGE_MARGIN; y = Math.random() * (h - PET_HEIGHT); break;
     }
   }
   
-  // 创建小宠物 - 用 video 标签
+  // 创建小宠物 - 用 video 标签，隐藏控件
   var pet = document.createElement('video');
   pet.src = PET_VIDEO_SRC;
   pet.autoplay = true;
   pet.loop = true;
   pet.muted = true;
   pet.playsInline = true;
-  pet.style.cssText = 'position:fixed;width:' + PET_SIZE + 'px;height:' + PET_SIZE + 'px;cursor:pointer;z-index:9998;user-select:none;transition:transform 0.2s;opacity:0.8;object-fit:contain;pointer-events:auto;';
+  pet.disablePictureInPicture = true;
+  pet.disableRemotePlayback = true;
+  pet.controls = false;
+  pet.style.cssText = 'position:fixed;width:' + PET_WIDTH + 'px;height:' + PET_HEIGHT + 'px;cursor:pointer;z-index:9998;user-select:none;transition:transform 0.2s;opacity:0.9;object-fit:contain;pointer-events:auto;';
+  // 隐藏所有视频控件
+  pet.setAttribute('webkit-playsinline', 'true');
+  pet.setAttribute('x5-playsinline', 'true');
+  pet.setAttribute('x5-video-player-type', 'h5');
   document.body.appendChild(pet);
   
   initPosition();
@@ -75,12 +71,12 @@
     
     // 边界反弹
     if (x <= EDGE_MARGIN) { x = EDGE_MARGIN; vx = Math.abs(vx); }
-    if (x >= w - PET_SIZE - EDGE_MARGIN) { x = w - PET_SIZE - EDGE_MARGIN; vx = -Math.abs(vx); }
+    if (x >= w - PET_WIDTH - EDGE_MARGIN) { x = w - PET_WIDTH - EDGE_MARGIN; vx = -Math.abs(vx); }
     if (y <= EDGE_MARGIN) { y = EDGE_MARGIN; vy = Math.abs(vy); }
-    if (y >= h - PET_SIZE - EDGE_MARGIN) { y = h - PET_SIZE - EDGE_MARGIN; vy = -Math.abs(vy); }
+    if (y >= h - PET_HEIGHT - EDGE_MARGIN) { y = h - PET_HEIGHT - EDGE_MARGIN; vy = -Math.abs(vy); }
     
-    // 偶尔随机变向
-    if (Math.random() < 0.005) {
+    // 偶尔随机变向（概率更低）
+    if (Math.random() < 0.002) {
       var s = randomSpeed();
       vx = s.x;
       vy = s.y;
@@ -88,7 +84,8 @@
     
     pet.style.left = x + 'px';
     pet.style.top = y + 'px';
-    pet.style.transform = vx > 0 ? 'scaleX(1)' : 'scaleX(-1)'; // 朝向移动方向
+    // 水平翻转朝向移动方向
+    pet.style.transform = vx > 0 ? 'scaleX(1)' : 'scaleX(-1)';
     
     requestAnimationFrame(move);
   }
@@ -97,13 +94,13 @@
   
   // Hover 效果
   pet.onmouseenter = function() {
-    pet.style.transform = 'scale(1.2)';
+    pet.style.transform = (vx > 0 ? 'scaleX(1)' : 'scaleX(-1)') + ' scale(1.15)';
     pet.style.opacity = '1';
   };
   pet.onmouseleave = function() {
     if (!modalOpen) {
       pet.style.transform = vx > 0 ? 'scaleX(1)' : 'scaleX(-1)';
-      pet.style.opacity = '0.8';
+      pet.style.opacity = '0.9';
     }
   };
   
