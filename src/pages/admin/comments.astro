@@ -29,6 +29,12 @@ import Layout from '../../layouts/BlogPost.astro';
       <div id="comments-loading">加载中...</div>
       <div id="comments-container"></div>
     </div>
+
+    <div id="secret-guests" style="margin-top:2rem;padding:1.5rem;border:2px solid #000;">
+      <h2 style="border-bottom:2px solid #cc0000;padding-bottom:0.5rem;margin-bottom:1rem;">秘密访客</h2>
+      <div id="secret-guests-loading">加载中...</div>
+      <div id="secret-guests-container"></div>
+    </div>
     
     <div id="access-log" style="margin-top: 2rem; padding: 1.5rem; border: 2px solid #000;">
       <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="toggleAccessLog()">
@@ -57,6 +63,7 @@ import Layout from '../../layouts/BlogPost.astro';
       main.style.display = 'block';
       if (pwdInput) pwdInput.value = storedPwd;
       loadComments();
+      loadSecretGuests();
       return;
     }
 
@@ -80,6 +87,7 @@ import Layout from '../../layouts/BlogPost.astro';
         overlay.style.display = 'none';
         main.style.display = 'block';
         loadComments();
+        loadSecretGuests();
       })
       .catch(function() {
         alert('密码错误');
@@ -159,6 +167,91 @@ import Layout from '../../layouts/BlogPost.astro';
         e.target.textContent = '删除';
       });
     }
+  });
+
+  function loadSecretGuests() {
+    var container = document.getElementById('secret-guests-container');
+    var loading = document.getElementById('secret-guests-loading');
+    var pwdInput = document.getElementById('admin-pwd');
+    if (!pwdInput || !pwdInput.value) return;
+
+    fetch('/api/admin-secret-guests', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pwdInput.value })
+    })
+      .then(function(response) {
+        if (!response.ok) throw new Error('加载失败');
+        return response.json();
+      })
+      .then(function(guests) {
+        loading.style.display = 'none';
+        container.replaceChildren();
+        if (!guests || !guests.length) {
+          var empty = document.createElement('p');
+          empty.style.color = '#999';
+          empty.textContent = '还没有人留下代号';
+          container.appendChild(empty);
+          return;
+        }
+
+        var list = document.createElement('div');
+        list.style.cssText = 'display:flex;flex-direction:column;gap:0.65rem;';
+        guests.forEach(function(guest) {
+          var item = document.createElement('div');
+          item.style.cssText = 'padding:0.8rem;border:1px solid #e0e0e0;';
+
+          var header = document.createElement('div');
+          header.style.cssText = 'display:flex;justify-content:space-between;align-items:flex-start;gap:0.75rem;flex-wrap:wrap;';
+          var alias = document.createElement('strong');
+          alias.textContent = guest.alias;
+          var time = document.createElement('small');
+          time.style.color = '#999';
+          time.textContent = new Date(guest.created_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false });
+          header.appendChild(alias);
+          header.appendChild(time);
+          item.appendChild(header);
+
+          var contact = document.createElement('p');
+          contact.style.cssText = 'margin:0.45rem 0;color:#555;white-space:pre-wrap;';
+          contact.textContent = guest.contact ? '联系方式：' + guest.contact : '未留下联系方式';
+          item.appendChild(contact);
+
+          var remove = document.createElement('button');
+          remove.type = 'button';
+          remove.className = 'del-secret-guest';
+          remove.setAttribute('data-id', guest.id);
+          remove.style.cssText = 'padding:0.3rem 0.8rem;background:#cc0000;color:#fff;border:0;cursor:pointer;font-weight:700;min-height:36px;';
+          remove.textContent = '删除';
+          item.appendChild(remove);
+          list.appendChild(item);
+        });
+        container.appendChild(list);
+      })
+      .catch(function() { loading.textContent = '加载失败'; });
+  }
+
+  document.getElementById('secret-guests-container').addEventListener('click', function(event) {
+    var button = event.target.closest('.del-secret-guest');
+    if (!button || !confirm('确定删除这条访客登记吗？')) return;
+    var pwdInput = document.getElementById('admin-pwd');
+    button.disabled = true;
+    button.textContent = '删除中...';
+    fetch('/api/admin-secret-guests', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: parseInt(button.getAttribute('data-id')), password: pwdInput.value })
+    })
+      .then(function(response) {
+        if (!response.ok) throw new Error('删除失败');
+        return response.json();
+      })
+      .then(function() { button.parentElement.remove(); })
+      .catch(function() {
+        button.disabled = false;
+        button.textContent = '删除';
+        alert('删除失败');
+      });
   });
 
   function toggleAccessLog() {

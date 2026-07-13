@@ -593,6 +593,7 @@
         if (data.success) {
           sessionStorage.removeItem('sk_');
           localStorage.removeItem('sk_');
+          sessionStorage.setItem('whisper_welcome_pending', '1');
           location.href = '/whispers/';
         } else {
           submitBtn.disabled = false;

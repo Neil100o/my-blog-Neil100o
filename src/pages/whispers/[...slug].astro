@@ -1,6 +1,7 @@
 ---
 import { readdir } from 'node:fs/promises';
 import Comments from '../../components/Comments.astro';
+import SecretLoader from '../../components/SecretLoader.astro';
 import Layout from '../../layouts/BlogPost.astro';
 
 export async function getStaticPaths() {
@@ -24,6 +25,8 @@ const { slug = '' } = Astro.params;
   showComments={false}
   noindex={true}
 >
+  <SecretLoader id="article-permission-check" label="正在确认权限并接收文章" />
+
   <div id="whispers-content" style="max-width:800px;margin:0 auto;padding:2rem 1rem;display:none;">
     <img id="secret-hero" src="" alt="" style="width:100%;border-radius:12px;margin-bottom:1.5rem;display:none;" />
     <h1 id="secret-title" style="font-size:2.5rem;margin-bottom:0.5rem;"></h1>
@@ -40,7 +43,7 @@ const { slug = '' } = Astro.params;
     </div>
   </div>
 
-  <div id="whispers-blocked" style="max-width:600px;margin:4rem auto;padding:2rem 1rem;text-align:center;">
+  <div id="whispers-blocked" style="max-width:600px;margin:4rem auto;padding:2rem 1rem;text-align:center;display:none;">
     <h1 style="border-bottom:3px solid #cc0000;padding-bottom:0.5rem;margin-bottom:1.5rem;">止步</h1>
     <p style="color:#666;margin-bottom:2rem;">此路不通。</p>
     <a href="/" style="display:inline-block;padding:0.6rem 1.5rem;background:#000;color:#fff;border:2px solid #000;font-weight:700;text-decoration:none;">← 返回首页</a>
@@ -53,12 +56,14 @@ const { slug = '' } = Astro.params;
 document.addEventListener('DOMContentLoaded', function() {
   var content = document.getElementById('whispers-content');
   var blocked = document.getElementById('whispers-blocked');
+  var permissionCheck = document.getElementById('article-permission-check');
   var title = document.getElementById('secret-title');
   var date = document.getElementById('secret-date');
   var body = document.getElementById('secret-body');
   var hero = document.getElementById('secret-hero');
 
   function showBlocked() {
+    permissionCheck.style.display = 'none';
     content.style.display = 'none';
     blocked.style.display = 'block';
   }
@@ -79,9 +84,19 @@ document.addEventListener('DOMContentLoaded', function() {
         hero.style.display = 'block';
       }
 
+      permissionCheck.style.display = 'none';
       blocked.style.display = 'none';
       content.style.display = 'block';
     })
-    .catch(function() { showBlocked(); });
+    .catch(function(error) {
+      if (error && error.status === 401) {
+        showBlocked();
+        return;
+      }
+      var loaderCode = permissionCheck.querySelector('.loader-code');
+      var loaderLabel = permissionCheck.querySelector('.loader-label');
+      if (loaderCode) loaderCode.textContent = 'SIGNAL LOST';
+      if (loaderLabel) loaderLabel.textContent = '文章接收失败，请刷新后重试';
+    });
 });
 </script>

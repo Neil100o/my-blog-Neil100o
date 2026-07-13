@@ -1,4 +1,5 @@
 ---
+import SecretLoader from '../components/SecretLoader.astro';
 import Layout from '../layouts/BlogPost.astro';
 ---
 
@@ -8,11 +9,15 @@ import Layout from '../layouts/BlogPost.astro';
   showComments={false}
   noindex={true}
 >
+  <SecretLoader id="permission-check" label="正在验证访问权限" />
+
   <main id="collection-main" style="max-width:960px;margin:0 auto;padding:2rem 1rem;display:none;">
     <h1 style="border-bottom:3px solid #cc0000;padding-bottom:0.5rem;margin-bottom:1rem;">秘密空间</h1>
     <p style="color:#666;margin-bottom:2rem;font-style:italic;">“嘘，别乱说哦”</p>
 
-    <div id="posts-loading" style="color:#999;">加载中...</div>
+    <div id="posts-loading" style="margin-bottom:2rem;">
+      <SecretLoader id="posts-orbit-loader" label="正在接收秘密目录" compact={true} />
+    </div>
     <ul id="posts-container" style="display:flex;flex-wrap:wrap;gap:2rem;list-style:none;margin:0;padding:0;"></ul>
 
     <div style="margin-top:3rem;text-align:center;">
@@ -20,10 +25,32 @@ import Layout from '../layouts/BlogPost.astro';
     </div>
   </main>
 
-  <div id="collection-blocked" style="max-width:600px;margin:4rem auto;padding:2rem 1rem;text-align:center;">
+  <div id="collection-blocked" style="max-width:600px;margin:4rem auto;padding:2rem 1rem;text-align:center;display:none;">
     <h1 style="border-bottom:3px solid #cc0000;padding-bottom:0.5rem;margin-bottom:1.5rem;">止步</h1>
     <p style="color:#666;margin-bottom:2rem;">此路不通。</p>
     <a href="/" style="display:inline-block;padding:0.6rem 1.5rem;background:#000;color:#fff;border:2px solid #000;font-weight:700;text-decoration:none;">← 返回首页</a>
+  </div>
+
+  <div id="secret-welcome" style="position:fixed;inset:0;z-index:10000;background:rgba(255,255,255,0.94);display:none;align-items:center;justify-content:center;padding:1rem;box-sizing:border-box;">
+    <div role="dialog" aria-modal="true" aria-labelledby="secret-welcome-title" style="width:min(520px,100%);max-height:calc(100vh - 2rem);overflow:auto;background:#fff;border:3px solid #000;box-shadow:10px 10px 0 #000;padding:2rem;box-sizing:border-box;">
+      <p style="margin:0 0 0.35rem;color:#cc0000;font-weight:800;letter-spacing:0.12em;">WELCOME</p>
+      <h2 id="secret-welcome-title" style="margin:0 0 1rem;border-bottom:3px solid #cc0000;padding-bottom:0.65rem;">祝贺你找到了这里</h2>
+      <p style="line-height:1.75;margin:0 0 0.85rem;">这里存放着一些不能随便说出口的东西。</p>
+      <p style="line-height:1.75;margin:0 0 1.5rem;font-weight:700;">既然我愿意让你进来，也请不要把这里看到的内容到处说。</p>
+
+      <form id="secret-guest-form">
+        <label for="secret-guest-alias" style="display:block;font-weight:800;margin-bottom:0.4rem;">留下一个代号</label>
+        <input id="secret-guest-alias" name="alias" required maxlength="50" autocomplete="nickname" placeholder="让莫莫知道你来过" style="width:100%;box-sizing:border-box;padding:0.75rem;border:2px solid #000;font:inherit;margin-bottom:1rem;" />
+
+        <label for="secret-guest-contact" style="display:block;font-weight:800;margin-bottom:0.4rem;">联系方式 <span style="color:#777;font-weight:500;">（可选）</span></label>
+        <input id="secret-guest-contact" name="contact" maxlength="200" placeholder="邮箱、QQ、其他能找到你的方式" style="width:100%;box-sizing:border-box;padding:0.75rem;border:2px solid #000;font:inherit;margin-bottom:0.65rem;" />
+        <p style="margin:0 0 1rem;color:#777;font-size:0.82rem;line-height:1.55;">这些信息只会保存在管理后台，不会显示给其他访客。</p>
+
+        <p id="secret-guest-status" role="status" style="min-height:1.4em;margin:0 0 0.75rem;color:#cc0000;font-weight:700;"></p>
+        <button id="secret-guest-submit" type="submit" style="width:100%;padding:0.85rem;background:#000;color:#fff;border:2px solid #000;font:inherit;font-weight:800;cursor:pointer;">留下代号并进入</button>
+        <button id="secret-guest-skip" type="button" style="width:100%;padding:0.65rem;background:#fff;color:#666;border:0;font:inherit;cursor:pointer;margin-top:0.35rem;">暂不登记，直接进入</button>
+      </form>
+    </div>
   </div>
 </Layout>
 
@@ -32,18 +59,71 @@ import Layout from '../layouts/BlogPost.astro';
 document.addEventListener('DOMContentLoaded', function() {
   var main = document.getElementById('collection-main');
   var blocked = document.getElementById('collection-blocked');
+  var permissionCheck = document.getElementById('permission-check');
   var loading = document.getElementById('posts-loading');
   var container = document.getElementById('posts-container');
+  var welcome = document.getElementById('secret-welcome');
+  var guestForm = document.getElementById('secret-guest-form');
+  var guestAlias = document.getElementById('secret-guest-alias');
+  var guestContact = document.getElementById('secret-guest-contact');
+  var guestStatus = document.getElementById('secret-guest-status');
+  var guestSubmit = document.getElementById('secret-guest-submit');
+  var guestSkip = document.getElementById('secret-guest-skip');
+  var authorized = false;
 
   function showBlocked() {
+    permissionCheck.style.display = 'none';
     main.style.display = 'none';
     blocked.style.display = 'block';
   }
 
   function showMain() {
+    authorized = true;
+    permissionCheck.style.display = 'none';
     blocked.style.display = 'none';
     main.style.display = 'block';
   }
+
+  function finishWelcome() {
+    sessionStorage.removeItem('whisper_welcome_pending');
+    welcome.style.display = 'none';
+    main.removeAttribute('inert');
+  }
+
+  function showWelcomeIfPending() {
+    if (sessionStorage.getItem('whisper_welcome_pending') !== '1') return;
+    main.setAttribute('inert', '');
+    welcome.style.display = 'flex';
+    setTimeout(function() { guestAlias.focus(); }, 80);
+  }
+
+  guestForm.addEventListener('submit', function(event) {
+    event.preventDefault();
+    var alias = guestAlias.value.trim();
+    var contact = guestContact.value.trim();
+    if (!alias) {
+      guestStatus.textContent = '请先留下一个代号。';
+      guestAlias.focus();
+      return;
+    }
+
+    guestSubmit.disabled = true;
+    guestSubmit.textContent = '记录中...';
+    guestStatus.textContent = '';
+    window.SecretSpace.fetchJson('/api/secret-guestbook', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ alias: alias, contact: contact })
+    })
+      .then(function() { finishWelcome(); })
+      .catch(function() {
+        guestStatus.textContent = '暂时没能记下来，可以重试或直接进入。';
+        guestSubmit.disabled = false;
+        guestSubmit.textContent = '重新提交';
+      });
+  });
+
+  guestSkip.addEventListener('click', finishWelcome);
 
   function renderPosts(posts) {
     loading.style.display = 'none';
@@ -111,9 +191,26 @@ document.addEventListener('DOMContentLoaded', function() {
     .then(function(data) {
       if (!data.valid) throw new Error('Unauthorized');
       showMain();
+      showWelcomeIfPending();
       return window.SecretSpace.fetchJson('/api/secret-posts');
     })
     .then(function(data) { renderPosts(data.posts); })
-    .catch(function() { showBlocked(); });
+    .catch(function(error) {
+      if (!authorized) {
+        if (error && error.status === 401) {
+          showBlocked();
+        } else {
+          var permissionCode = permissionCheck.querySelector('.loader-code');
+          var permissionLabel = permissionCheck.querySelector('.loader-label');
+          if (permissionCode) permissionCode.textContent = 'SIGNAL LOST';
+          if (permissionLabel) permissionLabel.textContent = '权限验证暂时失败，请刷新后重试';
+        }
+        return;
+      }
+      var loaderCode = loading.querySelector('.loader-code');
+      var loaderLabel = loading.querySelector('.loader-label');
+      if (loaderCode) loaderCode.textContent = 'SIGNAL LOST';
+      if (loaderLabel) loaderLabel.textContent = '目录接收失败，请刷新后重试';
+    });
 });
 </script>

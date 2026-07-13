@@ -1,0 +1,273 @@
+<div id="blog-launch-intro" class="launch-intro" role="dialog" aria-modal="true" aria-label="正在进入 Mo Blog">
+  <button id="launch-intro-skip" class="intro-skip" type="button">跳过</button>
+
+  <div class="poster-copy">
+    <p class="poster-serial">МО БЛОГ · 2026</p>
+    <h1>向思想的<br />轨道出发</h1>
+    <p class="poster-subtitle">记录　观察　未完成的通信</p>
+  </div>
+
+  <svg class="launch-map" viewBox="0 0 1000 700" aria-hidden="true">
+    <defs>
+      <linearGradient id="launchTrail" x1="0" y1="1" x2="1" y2="0">
+        <stop offset="0" stop-color="#f4e7bd" stop-opacity="0" />
+        <stop offset="0.32" stop-color="#f4e7bd" />
+        <stop offset="0.72" stop-color="#f0bd3f" />
+        <stop offset="1" stop-color="#cf3f2f" />
+      </linearGradient>
+      <filter id="starGlow" x="-100%" y="-100%" width="300%" height="300%">
+        <feGaussianBlur stdDeviation="7" result="blur" />
+        <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+      </filter>
+    </defs>
+
+    <circle class="poster-planet" cx="95" cy="635" r="112" />
+    <path class="poster-ray ray-wide" d="M 84 663 C 270 650 382 568 500 420 C 618 272 735 142 904 40" />
+    <path class="poster-ray ray-mid" d="M 84 663 C 270 650 382 568 500 420 C 618 272 735 142 904 40" />
+    <path class="poster-ray ray-core" d="M 84 663 C 270 650 382 568 500 420 C 618 272 735 142 904 40" />
+    <path class="orbit-guide guide-one" d="M 60 605 C 294 676 480 530 566 343 C 655 149 813 67 951 76" />
+    <path class="orbit-guide guide-two" d="M 145 704 C 208 541 398 505 566 433 C 744 357 825 177 844 16" />
+
+    <g class="flight-star" filter="url(#starGlow)">
+      <polygon points="0,-25 6,-8 24,-8 10,3 15,21 0,11 -15,21 -10,3 -24,-8 -6,-8" />
+      <animateMotion
+        path="M 84 663 C 270 650 382 568 500 420 C 618 272 735 142 904 40"
+        begin="0.45s"
+        dur="2.35s"
+        fill="freeze"
+        calcMode="spline"
+        keyTimes="0;1"
+        keySplines="0.32 0.05 0.12 1"
+        rotate="auto"
+      />
+    </g>
+  </svg>
+
+  <div class="poster-stamp" aria-hidden="true">MO<br />BLOG</div>
+</div>
+
+<script is:inline>
+(function() {
+  var intro = document.getElementById('blog-launch-intro');
+  var skip = document.getElementById('launch-intro-skip');
+  if (!intro) return;
+
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var seen = false;
+  try { seen = sessionStorage.getItem('blog_launch_seen') === '1'; } catch (e) {}
+
+  if (seen || reduceMotion) {
+    try { sessionStorage.setItem('blog_launch_seen', '1'); } catch (e) {}
+    intro.remove();
+    return;
+  }
+
+  try { sessionStorage.setItem('blog_launch_seen', '1'); } catch (e) {}
+  document.documentElement.classList.add('blog-intro-active');
+  intro.classList.add('is-running');
+
+  var finished = false;
+  function finishIntro() {
+    if (finished) return;
+    finished = true;
+    intro.classList.add('is-leaving');
+    document.documentElement.classList.remove('blog-intro-active');
+    setTimeout(function() { intro.remove(); }, 380);
+  }
+
+  skip.addEventListener('click', finishIntro);
+  setTimeout(finishIntro, 3700);
+})();
+</script>
+
+<style>
+  .launch-intro {
+    position: fixed;
+    inset: 0;
+    z-index: 20000;
+    overflow: hidden;
+    color: #f4e7bd;
+    background:
+      linear-gradient(116deg, transparent 0 55%, rgba(177, 47, 38, 0.2) 55.2% 56%, transparent 56.2%),
+      radial-gradient(circle at 12% 92%, rgba(25, 71, 98, 0.55), transparent 31%),
+      #050d15;
+    opacity: 1;
+    transition: opacity 320ms ease, visibility 320ms ease;
+  }
+
+  .launch-intro::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.34;
+    background-image:
+      linear-gradient(rgba(123, 167, 189, 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(123, 167, 189, 0.08) 1px, transparent 1px);
+    background-size: 42px 42px;
+    mask-image: linear-gradient(to bottom, #000, transparent 82%);
+  }
+
+  .launch-intro.is-leaving {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .poster-copy {
+    position: absolute;
+    z-index: 2;
+    top: clamp(4rem, 10vh, 8rem);
+    left: clamp(1.5rem, 7vw, 7rem);
+    max-width: 560px;
+    transform: translateY(14px);
+    opacity: 0;
+    animation: poster-copy-in 700ms 120ms ease-out forwards;
+  }
+
+  .poster-serial {
+    margin: 0 0 0.85rem;
+    color: #efb63d;
+    font-size: clamp(0.72rem, 1.1vw, 0.95rem);
+    font-weight: 800;
+    letter-spacing: 0.28em;
+  }
+
+  .poster-copy h1 {
+    margin: 0;
+    color: #f4e7bd;
+    font-size: clamp(3rem, 7.6vw, 7.2rem);
+    line-height: 0.92;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    text-shadow: 5px 5px 0 #9e2f2a;
+  }
+
+  .poster-subtitle {
+    display: inline-block;
+    margin: 1.35rem 0 0;
+    padding-top: 0.65rem;
+    border-top: 3px solid #c43b30;
+    color: #bcd0dc;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+  }
+
+  .launch-map {
+    position: absolute;
+    width: min(78vw, 1080px);
+    height: auto;
+    right: -3vw;
+    bottom: -9vh;
+    overflow: visible;
+  }
+
+  .poster-planet {
+    fill: #0a2435;
+    stroke: #7ba2b7;
+    stroke-width: 3;
+  }
+
+  .poster-ray {
+    fill: none;
+    stroke-linecap: round;
+    stroke-dasharray: 1160;
+    stroke-dashoffset: 1160;
+    animation: launch-trail 2.45s 0.42s cubic-bezier(0.28, 0.05, 0.13, 1) forwards;
+  }
+
+  .ray-wide { stroke: rgba(244, 231, 189, 0.14); stroke-width: 82; }
+  .ray-mid { stroke: url(#launchTrail); stroke-width: 34; }
+  .ray-core { stroke: #d13d2f; stroke-width: 5; }
+
+  .orbit-guide {
+    fill: none;
+    stroke: rgba(128, 176, 201, 0.34);
+    stroke-width: 2;
+    stroke-dasharray: 9 12;
+  }
+
+  .guide-one { animation: guide-drift 8s linear infinite; }
+  .guide-two { animation: guide-drift 11s linear reverse infinite; }
+
+  .flight-star {
+    fill: #f2ba3d;
+    opacity: 0;
+    animation: flight-star-show 2.45s 0.42s ease forwards;
+  }
+
+  .poster-stamp {
+    position: absolute;
+    right: clamp(1.2rem, 4vw, 4rem);
+    top: clamp(1.2rem, 4vw, 3rem);
+    width: 64px;
+    height: 64px;
+    display: grid;
+    place-items: center;
+    border: 3px solid #a7352e;
+    color: #f4e7bd;
+    font-size: 0.68rem;
+    font-weight: 900;
+    line-height: 1.05;
+    text-align: center;
+    letter-spacing: 0.12em;
+    transform: rotate(5deg);
+  }
+
+  .intro-skip {
+    position: absolute;
+    z-index: 4;
+    right: clamp(1rem, 3vw, 2rem);
+    bottom: clamp(1rem, 3vw, 2rem);
+    padding: 0.55rem 1rem;
+    color: #c7d7df;
+    background: rgba(5, 13, 21, 0.72);
+    border: 1px solid #66879a;
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+  }
+
+  .intro-skip:hover,
+  .intro-skip:focus-visible {
+    color: #07131e;
+    background: #f4e7bd;
+    border-color: #f4e7bd;
+  }
+
+  @keyframes poster-copy-in {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes launch-trail {
+    0% { stroke-dashoffset: 1160; opacity: 0; }
+    12% { opacity: 1; }
+    100% { stroke-dashoffset: 0; opacity: 1; }
+  }
+
+  @keyframes flight-star-show {
+    0%, 3% { opacity: 0; }
+    12%, 82% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  @keyframes guide-drift {
+    to { stroke-dashoffset: -210; }
+  }
+
+  @media (max-width: 720px) {
+    .poster-copy { top: 12vh; }
+    .poster-copy h1 { font-size: clamp(3rem, 15vw, 5.2rem); }
+    .poster-subtitle { max-width: 78vw; font-size: 0.72rem; line-height: 1.7; }
+    .launch-map { width: 132vw; right: -38vw; bottom: -2vh; }
+    .poster-stamp { display: none; }
+  }
+</style>
+
+<style is:global>
+  html.blog-intro-active,
+  html.blog-intro-active body {
+    overflow: hidden;
+  }
+</style>
