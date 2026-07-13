@@ -346,6 +346,11 @@ img {
   border: 2px solid var(--line);
 }
 
+img[loading="lazy"] {
+
+  background: rgba(217, 211, 197, 0.42);
+}
+
 /* ===== 输入框 ===== */
 
 input,

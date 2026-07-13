@@ -28,7 +28,7 @@ const { slug = '' } = Astro.params;
   <SecretLoader id="article-permission-check" label="正在确认权限并接收文章" />
 
   <div id="whispers-content" style="max-width:800px;margin:0 auto;padding:2rem 1rem;display:none;">
-    <img id="secret-hero" src="" alt="" style="width:100%;border-radius:12px;margin-bottom:1.5rem;display:none;" />
+    <img id="secret-hero" src="" alt="" width="1020" height="510" loading="eager" decoding="async" fetchpriority="high" style="width:100%;height:auto;border-radius:12px;margin-bottom:1.5rem;display:none;" />
     <h1 id="secret-title" style="font-size:2.5rem;margin-bottom:0.5rem;"></h1>
     <p id="secret-date" style="color:#666;margin-bottom:2rem;"></p>
     <div id="secret-body" style="line-height:1.8;font-size:1.1rem;"></div>

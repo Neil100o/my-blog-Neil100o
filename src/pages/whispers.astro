@@ -151,7 +151,11 @@ document.addEventListener('DOMContentLoaded', function() {
         var image = document.createElement('img');
         image.src = imageUrl;
         image.alt = '';
-        image.loading = 'lazy';
+        image.loading = index === 0 ? 'eager' : 'lazy';
+        image.decoding = 'async';
+        image.fetchPriority = index === 0 ? 'high' : 'auto';
+        image.width = 1020;
+        image.height = 510;
         image.style.cssText = 'width:100%;border-radius:12px;margin-bottom:0.5rem;object-fit:cover;';
         if (index === 0) image.style.maxHeight = '400px';
         link.appendChild(image);

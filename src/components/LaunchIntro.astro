@@ -1,49 +1,68 @@
 <div id="blog-launch-intro" class="launch-intro" role="dialog" aria-modal="true" aria-label="正在进入 Mo Blog">
   <button id="launch-intro-skip" class="intro-skip" type="button">跳过</button>
 
-  <div class="poster-copy">
-    <p class="poster-serial">МО БЛОГ · 2026</p>
-    <h1>向思想的<br />轨道出发</h1>
-    <p class="poster-subtitle">记录　观察　未完成的通信</p>
-  </div>
-
-  <svg class="launch-map" viewBox="0 0 1000 700" aria-hidden="true">
+  <svg class="launch-map" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
     <defs>
-      <linearGradient id="launchTrail" x1="0" y1="1" x2="1" y2="0">
-        <stop offset="0" stop-color="#f4e7bd" stop-opacity="0" />
-        <stop offset="0.32" stop-color="#f4e7bd" />
-        <stop offset="0.72" stop-color="#f0bd3f" />
-        <stop offset="1" stop-color="#cf3f2f" />
+      <linearGradient id="mainTrail" x1="0" y1="1" x2="1" y2="0">
+        <stop offset="0" stop-color="#fff3c9" />
+        <stop offset="0.64" stop-color="#ffe79a" />
+        <stop offset="1" stop-color="#f2b42f" />
       </linearGradient>
-      <filter id="starGlow" x="-100%" y="-100%" width="300%" height="300%">
-        <feGaussianBlur stdDeviation="7" result="blur" />
+      <linearGradient id="sideTrail" x1="0" y1="1" x2="1" y2="0">
+        <stop offset="0" stop-color="#fff8df" />
+        <stop offset="0.72" stop-color="#ffe58d" />
+        <stop offset="1" stop-color="#efad26" />
+      </linearGradient>
+      <filter id="fixedStarGlow" x="-130%" y="-130%" width="360%" height="360%">
+        <feGaussianBlur stdDeviation="8" result="blur" />
         <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
       </filter>
+      <mask id="trailReveal" maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="700">
+        <rect width="1000" height="700" fill="#000" />
+        <path
+          class="reveal-path"
+          pathLength="1"
+          d="M 42 680 C 250 659 414 555 548 405 C 680 257 792 124 908 34"
+          fill="none"
+          stroke="#fff"
+          stroke-width="390"
+          stroke-linecap="round"
+        />
+      </mask>
     </defs>
 
-    <circle class="poster-planet" cx="95" cy="635" r="112" />
-    <path class="poster-ray ray-wide" d="M 84 663 C 270 650 382 568 500 420 C 618 272 735 142 904 40" />
-    <path class="poster-ray ray-mid" d="M 84 663 C 270 650 382 568 500 420 C 618 272 735 142 904 40" />
-    <path class="poster-ray ray-core" d="M 84 663 C 270 650 382 568 500 420 C 618 272 735 142 904 40" />
-    <path class="orbit-guide guide-one" d="M 60 605 C 294 676 480 530 566 343 C 655 149 813 67 951 76" />
-    <path class="orbit-guide guide-two" d="M 145 704 C 208 541 398 505 566 433 C 744 357 825 177 844 16" />
+    <g class="trail-fields" mask="url(#trailReveal)">
+      <path
+        class="main-ribbon"
+        d="M 22 671 C 224 650 402 557 548 402 C 683 259 798 119 908 34
+           L 858 186 C 770 283 688 377 605 472 C 463 634 282 690 64 704 Z"
+      />
+      <path
+        class="side-ribbon"
+        d="M 553 706 C 520 619 552 527 620 424 C 718 277 814 132 908 34
+           L 869 186 C 792 302 721 414 656 522 C 598 619 582 674 590 706 Z"
+      />
+      <path class="main-red-line" d="M 72 692 C 270 655 421 555 548 410 C 671 268 786 133 900 42" />
+      <path class="side-red-line" d="M 574 699 C 552 620 581 531 641 434 C 732 286 817 143 900 42" />
+      <path class="gold-edge" d="M 30 681 C 240 655 408 553 548 402 C 683 257 798 119 908 34" />
+    </g>
 
-    <g class="flight-star" filter="url(#starGlow)">
-      <polygon points="0,-25 6,-8 24,-8 10,3 15,21 0,11 -15,21 -10,3 -24,-8 -6,-8" />
+    <g class="flight-star" filter="url(#fixedStarGlow)">
+      <g transform="rotate(42)">
+        <polygon points="0,-27 7,-9 27,-9 11,3 17,23 0,12 -17,23 -11,3 -27,-9 -7,-9" />
+      </g>
       <animateMotion
-        path="M 84 663 C 270 650 382 568 500 420 C 618 272 735 142 904 40"
-        begin="0.45s"
-        dur="2.35s"
+        path="M 42 680 C 250 659 414 555 548 405 C 680 257 792 124 908 34"
+        begin="0.24s"
+        dur="2.55s"
         fill="freeze"
         calcMode="spline"
         keyTimes="0;1"
-        keySplines="0.32 0.05 0.12 1"
-        rotate="auto"
+        keySplines="0.32 0.04 0.1 1"
+        rotate="0"
       />
     </g>
   </svg>
-
-  <div class="poster-stamp" aria-hidden="true">MO<br />BLOG</div>
 </div>
 
 <script is:inline>
@@ -64,7 +83,6 @@
 
   try { sessionStorage.setItem('blog_launch_seen', '1'); } catch (e) {}
   document.documentElement.classList.add('blog-intro-active');
-  intro.classList.add('is-running');
 
   var finished = false;
   function finishIntro() {
@@ -76,7 +94,7 @@
   }
 
   skip.addEventListener('click', finishIntro);
-  setTimeout(finishIntro, 3700);
+  setTimeout(finishIntro, 3400);
 })();
 </script>
 
@@ -86,25 +104,21 @@
     inset: 0;
     z-index: 20000;
     overflow: hidden;
-    color: #f4e7bd;
     background:
-      linear-gradient(116deg, transparent 0 55%, rgba(177, 47, 38, 0.2) 55.2% 56%, transparent 56.2%),
-      radial-gradient(circle at 12% 92%, rgba(25, 71, 98, 0.55), transparent 31%),
-      #050d15;
+      radial-gradient(circle at 13% 88%, rgba(18, 54, 77, 0.62), transparent 34%),
+      linear-gradient(145deg, #071522, #02070c 72%);
     opacity: 1;
     transition: opacity 320ms ease, visibility 320ms ease;
   }
 
-  .launch-intro::before {
+  .launch-intro::after {
     content: '';
     position: absolute;
     inset: 0;
-    opacity: 0.34;
-    background-image:
-      linear-gradient(rgba(123, 167, 189, 0.08) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(123, 167, 189, 0.08) 1px, transparent 1px);
-    background-size: 42px 42px;
-    mask-image: linear-gradient(to bottom, #000, transparent 82%);
+    pointer-events: none;
+    opacity: 0.12;
+    background-image: linear-gradient(rgba(171, 202, 217, 0.12) 1px, transparent 1px);
+    background-size: 100% 6px;
   }
 
   .launch-intro.is-leaving {
@@ -113,155 +127,96 @@
     pointer-events: none;
   }
 
-  .poster-copy {
-    position: absolute;
-    z-index: 2;
-    top: clamp(4rem, 10vh, 8rem);
-    left: clamp(1.5rem, 7vw, 7rem);
-    max-width: 560px;
-    transform: translateY(14px);
-    opacity: 0;
-    animation: poster-copy-in 700ms 120ms ease-out forwards;
-  }
-
-  .poster-serial {
-    margin: 0 0 0.85rem;
-    color: #efb63d;
-    font-size: clamp(0.72rem, 1.1vw, 0.95rem);
-    font-weight: 800;
-    letter-spacing: 0.28em;
-  }
-
-  .poster-copy h1 {
-    margin: 0;
-    color: #f4e7bd;
-    font-size: clamp(3rem, 7.6vw, 7.2rem);
-    line-height: 0.92;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-    text-shadow: 5px 5px 0 #9e2f2a;
-  }
-
-  .poster-subtitle {
-    display: inline-block;
-    margin: 1.35rem 0 0;
-    padding-top: 0.65rem;
-    border-top: 3px solid #c43b30;
-    color: #bcd0dc;
-    font-weight: 700;
-    letter-spacing: 0.18em;
-  }
-
   .launch-map {
     position: absolute;
-    width: min(78vw, 1080px);
-    height: auto;
-    right: -3vw;
-    bottom: -9vh;
-    overflow: visible;
+    inset: 0;
+    width: 100%;
+    height: 100%;
   }
 
-  .poster-planet {
-    fill: #0a2435;
-    stroke: #7ba2b7;
-    stroke-width: 3;
+  .reveal-path {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: reveal-trajectory 2.58s 0.2s cubic-bezier(0.32, 0.04, 0.1, 1) forwards;
   }
 
-  .poster-ray {
+  .main-ribbon {
+    fill: url(#mainTrail);
+    stroke: #f5bf28;
+    stroke-width: 7;
+    stroke-linejoin: round;
+  }
+
+  .side-ribbon {
+    fill: url(#sideTrail);
+    stroke: #ffd122;
+    stroke-width: 8;
+    stroke-linejoin: round;
+  }
+
+  .main-red-line,
+  .side-red-line,
+  .gold-edge {
     fill: none;
     stroke-linecap: round;
-    stroke-dasharray: 1160;
-    stroke-dashoffset: 1160;
-    animation: launch-trail 2.45s 0.42s cubic-bezier(0.28, 0.05, 0.13, 1) forwards;
   }
 
-  .ray-wide { stroke: rgba(244, 231, 189, 0.14); stroke-width: 82; }
-  .ray-mid { stroke: url(#launchTrail); stroke-width: 34; }
-  .ray-core { stroke: #d13d2f; stroke-width: 5; }
-
-  .orbit-guide {
-    fill: none;
-    stroke: rgba(128, 176, 201, 0.34);
-    stroke-width: 2;
-    stroke-dasharray: 9 12;
+  .main-red-line,
+  .side-red-line {
+    stroke: #d9472b;
+    stroke-width: 4;
   }
 
-  .guide-one { animation: guide-drift 8s linear infinite; }
-  .guide-two { animation: guide-drift 11s linear reverse infinite; }
+  .gold-edge {
+    stroke: #ffc91e;
+    stroke-width: 7;
+  }
 
   .flight-star {
-    fill: #f2ba3d;
+    fill: #f3b72f;
     opacity: 0;
-    animation: flight-star-show 2.45s 0.42s ease forwards;
-  }
-
-  .poster-stamp {
-    position: absolute;
-    right: clamp(1.2rem, 4vw, 4rem);
-    top: clamp(1.2rem, 4vw, 3rem);
-    width: 64px;
-    height: 64px;
-    display: grid;
-    place-items: center;
-    border: 3px solid #a7352e;
-    color: #f4e7bd;
-    font-size: 0.68rem;
-    font-weight: 900;
-    line-height: 1.05;
-    text-align: center;
-    letter-spacing: 0.12em;
-    transform: rotate(5deg);
+    animation: fixed-star-show 2.72s 0.2s ease forwards;
   }
 
   .intro-skip {
     position: absolute;
-    z-index: 4;
+    z-index: 3;
     right: clamp(1rem, 3vw, 2rem);
     bottom: clamp(1rem, 3vw, 2rem);
-    padding: 0.55rem 1rem;
-    color: #c7d7df;
-    background: rgba(5, 13, 21, 0.72);
-    border: 1px solid #66879a;
+    padding: 0.5rem 0.9rem;
+    color: rgba(220, 233, 239, 0.72);
+    background: rgba(2, 7, 12, 0.55);
+    border: 1px solid rgba(143, 176, 193, 0.5);
     font: inherit;
-    font-size: 0.78rem;
+    font-size: 0.75rem;
     font-weight: 700;
-    letter-spacing: 0.12em;
     cursor: pointer;
   }
 
   .intro-skip:hover,
   .intro-skip:focus-visible {
-    color: #07131e;
-    background: #f4e7bd;
-    border-color: #f4e7bd;
+    color: #071522;
+    background: #fff3c9;
+    border-color: #fff3c9;
   }
 
-  @keyframes poster-copy-in {
-    to { opacity: 1; transform: translateY(0); }
+  @keyframes reveal-trajectory {
+    to { stroke-dashoffset: 0; }
   }
 
-  @keyframes launch-trail {
-    0% { stroke-dashoffset: 1160; opacity: 0; }
-    12% { opacity: 1; }
-    100% { stroke-dashoffset: 0; opacity: 1; }
-  }
-
-  @keyframes flight-star-show {
-    0%, 3% { opacity: 0; }
-    12%, 82% { opacity: 1; }
+  @keyframes fixed-star-show {
+    0%, 2% { opacity: 0; }
+    10%, 86% { opacity: 1; }
     100% { opacity: 0; }
   }
 
-  @keyframes guide-drift {
-    to { stroke-dashoffset: -210; }
-  }
-
   @media (max-width: 720px) {
-    .poster-copy { top: 12vh; }
-    .poster-copy h1 { font-size: clamp(3rem, 15vw, 5.2rem); }
-    .poster-subtitle { max-width: 78vw; font-size: 0.72rem; line-height: 1.7; }
-    .launch-map { width: 132vw; right: -38vw; bottom: -2vh; }
-    .poster-stamp { display: none; }
+    .launch-map {
+      width: 142%;
+      height: 108%;
+      left: -35%;
+      top: -5%;
+    }
   }
 </style>
 

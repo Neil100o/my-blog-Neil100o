@@ -24,7 +24,7 @@
     text = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, function(_, alt, source) {
       var url = safeUrl(source);
       if (!url) return '';
-      return '<img src="' + escapeHtml(url) + '" alt="' + alt + '" loading="lazy" style="max-width:100%;height:auto;border-radius:12px;margin:1rem 0;" />';
+      return '<img src="' + escapeHtml(url) + '" alt="' + alt + '" loading="lazy" decoding="async" style="max-width:100%;height:auto;border-radius:12px;margin:1rem 0;" />';
     });
     text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, function(_, label, source) {
       var url = safeUrl(source);

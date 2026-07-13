@@ -104,11 +104,19 @@ const posts = (await getCollection('blog'))
 		<main>
 			<section>
 				<ul>
-					{posts.filter(post => !post.data.hidden).map((post) => (
+					{posts.filter(post => !post.data.hidden).map((post, index) => (
                        <li>
 						   <a href={`/blog/${post.id}/`}>
                               {post.data.heroImage && (
-								  <Image src={post.data.heroImage} width={1020} height={510} alt="" />
+								  <Image
+									  src={post.data.heroImage}
+									  width={1020}
+									  height={510}
+									  alt=""
+									  loading={index === 0 ? 'eager' : 'lazy'}
+									  decoding="async"
+									  fetchpriority={index === 0 ? 'high' : 'auto'}
+								  />
                                )}
                                <h4 class="title">{post.data.title}</h4>
                                <p class="date">
