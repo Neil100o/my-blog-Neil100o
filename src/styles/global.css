@@ -538,6 +538,7 @@ time {
 @media (hover: hover) {
   main > section,
   main > article,
+  main.home-main > *,
   .prose > * {
     animation: winter-reveal 420ms ease both;
   }
