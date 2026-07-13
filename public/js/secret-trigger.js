@@ -13,16 +13,38 @@
   var modalOpen = false;
   var spineLoaded = false;
   var doll = null;
+  var dollBaseScale = 1;
   var app = null;
   var currentAnim = 'move'; // 当前动画状态
   var stopTimer = null;     // 停止定时器
   var moveTimer = null;     // 移动定时器
+  var interactionTimer = null;
+  var clickResetTimer = null;
+  var hintTimer = null;
+  var petClickCount = 0;
+  var pageDialogue = [];
+  var pageDialogueIndex = 0;
+
+  // 指定页面可以通过 meta 配置独有的小人台词。
+  var dialogueMeta = document.querySelector('meta[name="pet-dialogue"]');
+  if (dialogueMeta) {
+    try {
+      var parsedDialogue = JSON.parse(dialogueMeta.getAttribute('content') || '[]');
+      if (Array.isArray(parsedDialogue)) {
+        pageDialogue = parsedDialogue.filter(function(line) {
+          return typeof line === 'string' && line.trim();
+        });
+      }
+    } catch (err) {
+      console.warn('页面小人台词配置无效:', err);
+    }
+  }
   
   // 动画切换
-  function setAnimation(name) {
-    if (!doll || !spineLoaded || currentAnim === name) return;
+  function setAnimation(name, loop, forceRestart) {
+    if (!doll || !spineLoaded || (!forceRestart && currentAnim === name)) return;
     currentAnim = name;
-    doll.state.setAnimationByName(0, name, true);
+    doll.state.setAnimationByName(0, name, loop !== false);
   }
   
   // 初始化位置（随机在页面边缘）
@@ -155,6 +177,7 @@
       var scaleX = (PET_WIDTH * 0.6) / skeletonWidth;
       var scaleY = (PET_HEIGHT * 0.6) / skeletonHeight;
       var scale = Math.min(scaleX, scaleY, 0.7);
+      dollBaseScale = scale;
       doll.scale.set(scale);
       
       // 6. 添加到舞台
@@ -237,10 +260,13 @@
       
       // 停止移动，切换到 wait 动画
       isMoving = false;
-      setAnimation('wait');
+      var idleAnimation = Math.random() < 0.32 ? 'lying' : 'wait';
+      setAnimation(idleAnimation, true, true);
       
-      // 1-3秒后恢复移动
-      var stopDuration = 1000 + Math.random() * 2000;
+      // 躺下时多休息一会，普通等待则短暂停留
+      var stopDuration = idleAnimation === 'lying'
+        ? 2800 + Math.random() * 2400
+        : 1000 + Math.random() * 2000;
       moveTimer = setTimeout(function() {
         if (modalOpen) { scheduleNextStop(); return; }
         
@@ -249,7 +275,7 @@
         vx = s.x;
         vy = s.y;
         isMoving = true;
-        setAnimation('move');
+        setAnimation('move', true, true);
         
         scheduleNextStop();
       }, stopDuration);
@@ -313,9 +339,7 @@
   // Hover 效果
   hitArea.onmouseenter = function() {
     if (doll && spineLoaded) {
-      // Spine 缩放通过 scale 实现
-      var baseScale = doll.scale.x;
-      doll.scale.set(baseScale * 1.1);
+      doll.scale.set(dollBaseScale * 1.1);
     } else {
       var content = wrapper.firstElementChild;
       if (content) {
@@ -327,8 +351,7 @@
   hitArea.onmouseleave = function() {
     if (!modalOpen) {
       if (doll && spineLoaded) {
-        var baseScale = doll.scale.x / 1.1;
-        doll.scale.set(baseScale);
+        doll.scale.set(dollBaseScale);
       } else {
         var content = wrapper.firstElementChild;
         if (content) {
@@ -338,33 +361,129 @@
       wrapper.style.opacity = '0.9';
     }
   };
+
+  // 小型文字反馈，提示连续点击进度
+  var petHint = document.createElement('div');
+  petHint.style.cssText = 'position:absolute;left:50%;top:5px;transform:translateX(-50%) translateY(4px);z-index:2;padding:0.3rem 0.55rem;background:#fff;border:1px solid #000;color:#000;font-size:0.72rem;font-weight:700;letter-spacing:0.04em;width:max-content;max-width:180px;box-sizing:border-box;white-space:normal;text-align:center;line-height:1.45;opacity:0;transition:opacity 160ms ease,transform 160ms ease;pointer-events:none;';
+  petHint.setAttribute('role', 'status');
+  petHint.setAttribute('aria-live', 'polite');
+  wrapper.appendChild(petHint);
+
+  function showPetHint(text, duration) {
+    petHint.textContent = text;
+    petHint.style.opacity = '1';
+    petHint.style.transform = 'translateX(-50%) translateY(0)';
+    if (hintTimer) clearTimeout(hintTimer);
+    hintTimer = setTimeout(function() {
+      petHint.style.opacity = '0';
+      petHint.style.transform = 'translateX(-50%) translateY(4px)';
+    }, duration || 1100);
+  }
+
+  function pauseRoaming() {
+    isMoving = false;
+    if (stopTimer) clearTimeout(stopTimer);
+    if (moveTimer) clearTimeout(moveTimer);
+    if (interactionTimer) clearTimeout(interactionTimer);
+    if (doll && spineLoaded) doll.scale.set(dollBaseScale);
+  }
+
+  function resumeRoaming(delay) {
+    if (interactionTimer) clearTimeout(interactionTimer);
+    interactionTimer = setTimeout(function() {
+      if (modalOpen) return;
+      var nextSpeed = randomSpeed();
+      vx = nextSpeed.x;
+      vy = nextSpeed.y;
+      isMoving = true;
+      setAnimation('move', true, true);
+      scheduleNextStop();
+    }, delay || 0);
+  }
   
-  // 点击弹出输入框
+  // 连续点击三次后，从小人位置放出秘密入口
   hitArea.addEventListener('click', function(e) {
     e.stopPropagation();
     if (modalOpen) return;
+
+    // 有页面专属台词时先逐句播放；全部说完后恢复原来的三击入口。
+    if (pageDialogueIndex < pageDialogue.length) {
+      var dialogueLine = pageDialogue[pageDialogueIndex];
+      pageDialogueIndex += 1;
+      var dialogueDuration = Math.min(5200, Math.max(2200, 900 + dialogueLine.length * 120));
+      var dialogueAnimation = pageDialogueIndex % 2 === 0 ? 'pick' : 'wait';
+
+      pauseRoaming();
+      setAnimation(dialogueAnimation, dialogueAnimation === 'wait', true);
+      showPetHint(dialogueLine, dialogueDuration);
+      resumeRoaming(dialogueDuration - 150);
+      return;
+    }
+
+    petClickCount += 1;
+    if (clickResetTimer) clearTimeout(clickResetTimer);
+    clickResetTimer = setTimeout(function() {
+      petClickCount = 0;
+    }, 4500);
+
+    pauseRoaming();
+
+    if (petClickCount === 1) {
+      setAnimation('wait', true, true);
+      showPetHint('嗯？');
+      resumeRoaming(900);
+      return;
+    }
+
+    if (petClickCount === 2) {
+      setAnimation('pick', false, true);
+      showPetHint('再点一次');
+      resumeRoaming(1350);
+      return;
+    }
+
+    petClickCount = 0;
+    if (clickResetTimer) clearTimeout(clickResetTimer);
     modalOpen = true;
-    isMoving = false;
+    setAnimation('pick', false, true);
+    showPetHint('入口已找到');
+
+    var petRect = wrapper.getBoundingClientRect();
+    var originX = petRect.left + petRect.width / 2;
+    var originY = petRect.top + petRect.height / 2;
     
     // 创建遮罩
     var overlay = document.createElement('div');
     overlay.id = 'pet-overlay';
-    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(255,255,255,0);z-index:9999;transition:background 480ms ease;';
     
     // 输入框
     var box = document.createElement('div');
-    box.style.cssText = 'background:#fff;border:3px solid #000;padding:2rem;max-width:400px;width:90%;box-shadow:8px 8px 0 #000;';
-    box.innerHTML = '<h3 style="margin:0 0 1rem 0;border-bottom:3px solid #cc0000;padding-bottom:0.5rem;font-size:1.3rem;">🔐 入口</h3>' +
+    box.setAttribute('role', 'dialog');
+    box.setAttribute('aria-modal', 'true');
+    box.setAttribute('aria-label', '秘密入口');
+    box.style.cssText = 'position:fixed;left:' + originX + 'px;top:' + originY + 'px;transform:translate(-50%,-50%) scale(0.16);opacity:0;background:#fff;border:3px solid #000;padding:2rem;max-width:400px;width:calc(100% - 2rem);box-sizing:border-box;box-shadow:8px 8px 0 #000;transition:left 560ms cubic-bezier(.22,.8,.24,1),top 560ms cubic-bezier(.22,.8,.24,1),transform 560ms cubic-bezier(.22,.8,.24,1),opacity 260ms ease;';
+    box.innerHTML = '<h3 style="margin:0 0 1rem 0;border-bottom:3px solid #cc0000;padding-bottom:0.5rem;font-size:1.3rem;letter-spacing:0.08em;">秘密入口</h3>' +
       '<p style="color:#666;margin-bottom:1.2rem;font-size:0.9rem;line-height:1.6;">如果你有秘钥，可以进入秘密空间。</p>' +
       '<div style="position:relative;margin-bottom:1rem;">' +
-        '<input type="password" id="pet-pwd" placeholder="输入秘钥" style="width:100%;padding:0.8rem;border:2px solid #000;font-size:1rem;box-sizing:border-box;padding-right:3rem;" />' +
-        '<button id="pet-toggle" type="button" style="position:absolute;right:0.5rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1.2rem;padding:0.2rem;">👁</button>' +
+        '<input type="password" id="pet-pwd" placeholder="输入秘钥" style="width:100%;padding:0.8rem;border:2px solid #000;font-size:1rem;box-sizing:border-box;padding-right:4.5rem;" />' +
+        '<button id="pet-toggle" type="button" aria-label="显示秘钥" style="position:absolute;right:0.45rem;top:50%;transform:translateY(-50%);background:#fff;border:1px solid #000;cursor:pointer;font-size:0.75rem;font-weight:700;padding:0.3rem 0.5rem;line-height:1;min-width:3rem;">显示</button>' +
       '</div>' +
       '<button id="pet-submit" style="width:100%;padding:0.9rem;background:#000;color:#fff;border:2px solid #000;font-weight:800;cursor:pointer;font-size:1rem;">进入</button>' +
       '<button id="pet-close" style="width:100%;padding:0.7rem;background:#fff;color:#000;border:2px solid #000;font-weight:700;cursor:pointer;margin-top:0.5rem;font-size:0.9rem;">关闭</button>';
     
     overlay.appendChild(box);
     document.body.appendChild(overlay);
+
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        overlay.style.background = 'rgba(255,255,255,0.9)';
+        box.style.left = '50%';
+        box.style.top = '50%';
+        box.style.transform = 'translate(-50%,-50%) scale(1)';
+        box.style.opacity = '1';
+      });
+    });
     
     var pwdInput = document.getElementById('pet-pwd');
     var toggleBtn = document.getElementById('pet-toggle');
@@ -375,7 +494,8 @@
     toggleBtn.addEventListener('click', function() {
       var isPassword = pwdInput.type === 'password';
       pwdInput.type = isPassword ? 'text' : 'password';
-      toggleBtn.textContent = isPassword ? '🙈' : '👁';
+      toggleBtn.textContent = isPassword ? '隐藏' : '显示';
+      toggleBtn.setAttribute('aria-label', isPassword ? '隐藏秘钥' : '显示秘钥');
     });
     
     // 提交
@@ -415,15 +535,18 @@
     
     // 关闭
     closeBtn.addEventListener('click', function() {
-      overlay.remove();
-      modalOpen = false;
-      isMoving = true;
-      setAnimation('move');
-      var s = randomSpeed();
-      vx = s.x;
-      vy = s.y;
-      requestAnimationFrame(move);
-      scheduleNextStop();
+      var currentPetRect = wrapper.getBoundingClientRect();
+      box.style.left = (currentPetRect.left + currentPetRect.width / 2) + 'px';
+      box.style.top = (currentPetRect.top + currentPetRect.height / 2) + 'px';
+      box.style.transform = 'translate(-50%,-50%) scale(0.16)';
+      box.style.opacity = '0';
+      overlay.style.background = 'rgba(255,255,255,0)';
+
+      setTimeout(function() {
+        overlay.remove();
+        modalOpen = false;
+        resumeRoaming(0);
+      }, 500);
     });
     
     // Enter 键
@@ -431,6 +554,6 @@
       if (e.key === 'Enter') submitBtn.click();
     });
     
-    pwdInput.focus();
+    setTimeout(function() { pwdInput.focus(); }, 600);
   });
 })();

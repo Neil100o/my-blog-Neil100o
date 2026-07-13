@@ -5,7 +5,7 @@ import Layout from '../../layouts/BlogPost.astro';
 <Layout title="评论与日志">
   <div id="auth-overlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;z-index:9999;display:flex;align-items:center;justify-content:center;">
   <div style="border:3px solid #000;padding:2rem;max-width:400px;width:90%;">
-    <h2 style="margin:0 0 1.5rem 0;border-bottom:3px solid #cc0000;padding-bottom:0.5rem;">🔒 评论与日志</h2>
+    <h2 style="margin:0 0 1.5rem 0;border-bottom:3px solid #cc0000;padding-bottom:0.5rem;">评论与日志</h2>
     <p style="margin:0 0 1rem 0;color:#666;">请输入密码进入</p>
     <input type="password" id="auth-pwd" placeholder="密码" style="width:100%;padding:0.7rem;border:2px solid #000;font-size:1rem;margin-bottom:1rem;" />
     <button id="auth-btn" style="width:100%;padding:0.8rem;background:#000;color:#fff;border:2px solid #000;font-weight:800;cursor:pointer;">进入</button>
@@ -16,23 +16,23 @@ import Layout from '../../layouts/BlogPost.astro';
     <div style="display:none;">
       <input type="password" id="admin-pwd" style="display:none;" />
     </div>
-    <h1 style="border-bottom: 3px solid #000; padding-bottom: 0.5rem; margin-bottom: 2rem;">💬 评论与日志</h1>
+    <h1 style="border-bottom: 3px solid #000; padding-bottom: 0.5rem; margin-bottom: 2rem;">评论与日志</h1>
     
     <div style="display:flex;gap:0.5rem;margin-bottom:2rem;border-bottom:2px solid #000;padding-bottom:0.5rem;flex-wrap:wrap;">
-      <a href="/admin" style="padding:0.5rem 1rem;background:#fff;color:#000;border:2px solid #000;text-decoration:none;font-weight:800;">✎ 发布</a>
-      <a href="/admin/posts" style="padding:0.5rem 1rem;background:#fff;color:#000;border:2px solid #000;text-decoration:none;font-weight:800;">📄 文章</a>
-      <a href="/admin/comments" style="padding:0.5rem 1rem;background:#000;color:#fff;text-decoration:none;font-weight:800;">💬 评论</a>
+      <a href="/admin" style="padding:0.5rem 1rem;background:#fff;color:#000;border:2px solid #000;text-decoration:none;font-weight:800;">发布</a>
+      <a href="/admin/posts" style="padding:0.5rem 1rem;background:#fff;color:#000;border:2px solid #000;text-decoration:none;font-weight:800;">文章</a>
+      <a href="/admin/comments" style="padding:0.5rem 1rem;background:#000;color:#fff;text-decoration:none;font-weight:800;">评论</a>
     </div>
     
     <div id="comment-list" style="padding: 1.5rem; border: 2px solid #000;">
-      <h2 style="border-bottom: 2px solid #cc0000; padding-bottom: 0.5rem; margin-bottom: 1rem;">💬 评论管理</h2>
+      <h2 style="border-bottom: 2px solid #cc0000; padding-bottom: 0.5rem; margin-bottom: 1rem;">评论管理</h2>
       <div id="comments-loading">加载中...</div>
       <div id="comments-container"></div>
     </div>
     
     <div id="access-log" style="margin-top: 2rem; padding: 1.5rem; border: 2px solid #000;">
       <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="toggleAccessLog()">
-        <h2 style="border-bottom: 2px solid #cc0000; padding-bottom: 0.5rem; margin-bottom: 0; margin-top: 0;">📊 访问日志</h2>
+        <h2 style="border-bottom: 2px solid #cc0000; padding-bottom: 0.5rem; margin-bottom: 0; margin-top: 0;">访问日志</h2>
         <button id="access-toggle-btn" style="padding:0.3rem 0.8rem;background:#000;color:#fff;border:none;cursor:pointer;font-weight:700;font-size:0.85rem;min-height:36px;">展开 ▼</button>
       </div>
       <div id="access-content" style="display:none;margin-top:1rem;">
@@ -203,7 +203,7 @@ import Layout from '../../layouts/BlogPost.astro';
         for (var i = 0; i < d.length; i++) {
           var log = d[i];
           var ua = log.user_agent || '';
-          var device = ua.includes('Mobile') ? '📱' : (ua.includes('iPad') ? '💻' : '🖥️');
+          var device = ua.includes('Mobile') ? '手机' : (ua.includes('iPad') ? '平板' : '桌面');
           html += '<div style="padding:0.6rem;border:1px solid #e0e0e0;">' +
             '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.5rem;">' +
               '<div><strong>' + device + '</strong> ' + (log.country || '未知') + '</div>' +

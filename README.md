@@ -58,6 +58,17 @@ All commands are run from the root of the project, from a terminal:
 
 Check out [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
 
+## 页面专属小人台词
+
+博客文章可以在 Markdown frontmatter 中添加 `petDialogue`。进入该文章后，每次点击小人会依次显示一句；全部说完后，后续点击仍使用原来的三击秘密入口。
+
+```yaml
+petDialogue:
+  - "这里好像有点不对劲。"
+  - "你注意到文章里的日期了吗？"
+  - "也许它不只是一个日期。"
+```
+
 ## Credit
 
 This theme is based off of the lovely [Bear Blog](https://github.com/HermanMartinus/bearblog/).

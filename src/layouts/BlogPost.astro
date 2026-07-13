@@ -9,12 +9,17 @@ import Comments from '../components/Comments.astro';
 
 type Props = CollectionEntry<'blog'>['data'];
 
-const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
+const { title, description, pubDate, updatedDate, heroImage, petDialogue = [] } = Astro.props;
 ---
 
 <html lang="zh-CN">
 	<head>
 		<BaseHead title={title} description={description} />
+		{
+			petDialogue.length > 0 && (
+				<meta name="pet-dialogue" content={JSON.stringify(petDialogue)} />
+			)
+		}
 		<style>
 			main {
 				width: calc(100% - 2em);
