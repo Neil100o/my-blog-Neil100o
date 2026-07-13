@@ -1,0 +1,111 @@
+---
+const isArticle = Astro.props.article === true;
+const showSnow = Astro.props.snow !== false;
+
+const snowflakes = Array.from({ length: 30 }, () => {
+	const size = 2 + Math.random() * 6;
+	const duration = 10 + Math.random() * 13;
+	return {
+		left: Math.random() * 100,
+		size,
+		duration,
+		delay: -Math.random() * duration,
+		drift: -45 + Math.random() * 90,
+		opacity: 0.28 + Math.random() * 0.42,
+	};
+});
+---
+
+{isArticle && <div class="reading-progress" aria-hidden="true"><span></span></div>}
+{showSnow && (
+	<div class="snowfall" aria-hidden="true">
+		{snowflakes.map((snowflake) => (
+			<span
+				class="snowflake"
+				style={`--left:${snowflake.left}%;--size:${snowflake.size}px;--duration:${snowflake.duration}s;--delay:${snowflake.delay}s;--drift:${snowflake.drift}px;--opacity:${snowflake.opacity.toFixed(2)}`}
+			></span>
+		))}
+	</div>
+)}
+
+<script>
+	const progress = document.querySelector('.reading-progress > span');
+	if (progress) {
+		let ticking = false;
+		const updateProgress = () => {
+			const scrollableHeight = document.documentElement.scrollHeight - window.innerHeight;
+			const percentage = scrollableHeight > 0 ? Math.min(100, (window.scrollY / scrollableHeight) * 100) : 0;
+			progress.style.transform = `scaleX(${percentage / 100})`;
+			ticking = false;
+		};
+
+		window.addEventListener('scroll', () => {
+			if (!ticking) {
+				window.requestAnimationFrame(updateProgress);
+				ticking = true;
+			}
+		}, { passive: true });
+		window.addEventListener('resize', updateProgress, { passive: true });
+		updateProgress();
+	}
+</script>
+
+<style>
+	.snowfall {
+		position: fixed;
+		inset: 0;
+		z-index: 20;
+		pointer-events: none;
+		overflow: hidden;
+	}
+
+	.snowflake {
+		position: absolute;
+		top: -12px;
+		left: var(--left);
+		width: var(--size);
+		height: var(--size);
+		border-radius: 50%;
+		background: rgba(255, 255, 255, var(--opacity));
+		box-shadow:
+			0 0 0 1px rgba(110, 125, 140, 0.1),
+			0 0 5px rgba(255, 255, 255, 0.45);
+		animation: snowfall var(--duration) linear var(--delay) infinite;
+		will-change: transform;
+	}
+
+	.reading-progress {
+		position: fixed;
+		top: 0;
+		left: 0;
+		z-index: 200;
+		width: 100%;
+		height: 3px;
+		background: rgba(17, 17, 17, 0.12);
+		pointer-events: none;
+	}
+
+	.reading-progress span {
+		display: block;
+		width: 100%;
+		height: 100%;
+		background: var(--accent, #b10000);
+		transform: scaleX(0);
+		transform-origin: left center;
+		will-change: transform;
+	}
+
+	@keyframes snowfall {
+		0% { transform: translate3d(0, -2vh, 0) rotate(0deg); }
+		100% { transform: translate3d(var(--drift), 106vh, 0) rotate(180deg); }
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.snowfall,
+		.reading-progress { display: none; }
+	}
+
+	@media (max-width: 700px) {
+		.snowflake:nth-child(n + 15) { display: none; }
+	}
+</style>

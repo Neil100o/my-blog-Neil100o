@@ -2,6 +2,10 @@ export async function onRequestPost(context) {
   try {
     const { request, env } = context;
     const body = await request.json();
+
+    if (!env.ADMIN_PASSWORD || body.password !== env.ADMIN_PASSWORD) {
+      return Response.json({ error: 'Unauthorized' }, { status: 403 });
+    }
     
     if (!env.RESEND_API_KEY) {
       return Response.json({ error: 'RESEND_API_KEY not set' }, { status: 500 });

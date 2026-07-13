@@ -1,4 +1,5 @@
 ---
+import { Image } from 'astro:assets';
 import { getCollection } from 'astro:content';
 import BaseHead from '../../components/BaseHead.astro';
 import Footer from '../../components/Footer.astro';
@@ -11,7 +12,7 @@ const posts = (await getCollection('blog'))
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
 	<head>
 		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
 		<style>
@@ -31,6 +32,11 @@ const posts = (await getCollection('blog'))
 			}
 			ul li {
 				width: calc(50% - 1rem);
+				transition: transform 180ms ease, filter 180ms ease;
+			}
+			ul li:hover {
+				transform: translateY(-4px);
+				filter: drop-shadow(0 8px 10px rgba(17, 17, 17, 0.12));
 			}
 			ul li * {
 				text-decoration: none;
@@ -73,7 +79,8 @@ const posts = (await getCollection('blog'))
 				color: rgb(var(--accent));
 			}
 			ul a:hover img {
-				box-shadow: var(--box-shadow);
+				box-shadow: 0 10px 20px rgba(17, 17, 17, 0.16);
+				transform: scale(1.012);
 			}
 			@media (max-width: 720px) {
 				ul {
@@ -97,24 +104,24 @@ const posts = (await getCollection('blog'))
 		<main>
 			<section>
 				<ul>
-					{posts.filter(post => post.data.hidden !== true && post.data.hidden !== 'true').map((post) => (
+					{posts.filter(post => !post.data.hidden).map((post) => (
                        <li>
-                           <a href={`/blog/${post.id}/`}>
+						   <a href={`/blog/${post.id}/`}>
                               {post.data.heroImage && (
-                                  <img src={post.data.heroImage} alt="" />
+								  <Image src={post.data.heroImage} width={1020} height={510} alt="" />
                                )}
                                <h4 class="title">{post.data.title}</h4>
                                <p class="date">
                                         <FormattedDate date={post.data.pubDate} />
 										</p>
-										{post.data.tags && post.data.tags.length > 0 && (
-                                      <div style="margin-top: 0.5rem; display: flex; gap: 0.4rem; flex-wrap: wrap;">
-                                      {post.data.tags.map(tag => (
-      <a href={`/tags/${tag}/`} style="display: inline-block; padding: 0.15rem 0.5rem; border: 1px solid #000; color: #000; text-decoration: none; font-size: 0.75rem; font-weight: 600;">{tag}</a>
-    ))}
-  </div>
-)}
 									</a>
+									{post.data.tags.length > 0 && (
+										<div style="margin-top: 0.5rem; display: flex; gap: 0.4rem; flex-wrap: wrap;">
+											{post.data.tags.map(tag => (
+												<a href={`/tags/${tag}/`} style="display: inline-block; padding: 0.15rem 0.5rem; border: 1px solid #000; color: #000; text-decoration: none; font-size: 0.75rem; font-weight: 600;">{tag}</a>
+											))}
+										</div>
+									)}
 								</li>
 							))
 							}

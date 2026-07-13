@@ -1,8 +1,18 @@
 ---
 import HeaderLink from './HeaderLink.astro';
 import { SITE_TITLE } from '../consts';
+import WinterEffects from './WinterEffects.astro';
+
+interface Props {
+  readingProgress?: boolean;
+  snow?: boolean;
+}
+
+const { readingProgress = false, snow = true } = Astro.props;
+const isAdmin = Astro.url.pathname === '/admin' || Astro.url.pathname.startsWith('/admin/');
 ---
 
+<WinterEffects article={readingProgress && !isAdmin} snow={snow && !isAdmin} />
 <header>
   <nav>
     <h2><a href="/">{SITE_TITLE}</a></h2>
