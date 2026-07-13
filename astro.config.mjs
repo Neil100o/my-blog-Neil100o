@@ -7,7 +7,12 @@ import { defineConfig, fontProviders } from 'astro/config';
 // https://astro.build/config
 export default defineConfig({
 	site: 'https://blog.moskavis.top/',
-	integrations: [mdx(), sitemap()],
+	integrations: [
+		mdx(),
+		sitemap({
+			filter: (page) => !new URL(page).pathname.startsWith('/whispers'),
+		}),
+	],
 	fonts: [
 		{
 			provider: fontProviders.local(),

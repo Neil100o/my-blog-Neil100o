@@ -69,6 +69,12 @@ petDialogue:
   - "也许它不只是一个日期。"
 ```
 
+也可以给正文中的特定文字添加 `data-pet-note`。点击后，小人会走到文字附近再显示注释：
+
+```html
+<button type="button" data-pet-note="这是一句由小人说出的注释。">可点击的文字</button>
+```
+
 ## Credit
 
 This theme is based off of the lovely [Bear Blog](https://github.com/HermanMartinus/bearblog/).

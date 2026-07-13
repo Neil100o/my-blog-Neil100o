@@ -1,0 +1,13 @@
+/whispers
+  Cache-Control: no-store, private
+  Referrer-Policy: no-referrer
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/whispers/*
+  Cache-Control: no-store, private
+  Referrer-Policy: no-referrer
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/api/secret-*
+  Cache-Control: no-store, private
+  Referrer-Policy: no-referrer

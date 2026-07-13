@@ -1,3 +1,5 @@
+import { hasValidSecretSession, jsonNoStore } from '../_shared/secret-auth.js';
+
 async function getLocationFromIP(ip) {
   try {
     if (!ip || ip === 'unknown') return '';
@@ -21,6 +23,10 @@ export async function onRequest(context) {
     const path = url.searchParams.get('path');
 
     if (!path) return new Response('Missing path', { status: 400 });
+
+    if (path.toLowerCase().startsWith('/whispers') && !(await hasValidSecretSession(request, env))) {
+      return jsonNoStore({ error: 'Unauthorized' }, 401);
+    }
 
     if (!env.DB) {
       return Response.json({ error: 'DB not bound' }, { status: 500 });

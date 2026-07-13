@@ -7,14 +7,26 @@ import FormattedDate from '../components/FormattedDate.astro';
 import Header from '../components/Header.astro';
 import Comments from '../components/Comments.astro';
 
-type Props = CollectionEntry<'blog'>['data'];
+type Props = CollectionEntry<'blog'>['data'] & {
+	showComments?: boolean;
+	noindex?: boolean;
+};
 
-const { title, description, pubDate, updatedDate, heroImage, petDialogue = [] } = Astro.props;
+const {
+	title,
+	description,
+	pubDate,
+	updatedDate,
+	heroImage,
+	petDialogue = [],
+	showComments = true,
+	noindex = false,
+} = Astro.props;
 ---
 
 <html lang="zh-CN">
 	<head>
-		<BaseHead title={title} description={description} />
+		<BaseHead title={title} description={description} noindex={noindex} />
 		{
 			petDialogue.length > 0 && (
 				<meta name="pet-dialogue" content={JSON.stringify(petDialogue)} />
@@ -90,12 +102,12 @@ const { title, description, pubDate, updatedDate, heroImage, petDialogue = [] } 
 					</div>
 					<slot />
 				</div>
-				 <hr style="margin: 3rem 0;" />
-                 <Comments />
+				{showComments && <hr style="margin: 3rem 0;" />}
+				{showComments && <Comments />}
 			</article>
 		</main>
 		<Footer />
-		<script src="/js/comments.js" defer></script>
+		{showComments && <script src="/js/comments.js" defer></script>}
 		
 	</body>
 </html>

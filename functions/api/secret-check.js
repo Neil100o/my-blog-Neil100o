@@ -1,24 +1,15 @@
+import { hasValidSecretSession, jsonNoStore } from '../_shared/secret-auth.js';
+
 export async function onRequest(context) {
   try {
     const { request, env } = context;
-    const url = new URL(request.url);
-    const key = url.searchParams.get('key');
-    
-    if (!key) {
-      return Response.json({ valid: false, error: 'Missing key' }, { status: 400 });
-    }
-    
     if (!env.SECRET_KV) {
-      return Response.json({ error: 'KV not bound' }, { status: 500 });
+      return jsonNoStore({ valid: false, error: 'Secret storage unavailable' }, 500);
     }
-    
-    const data = await env.SECRET_KV.get(key);
-    if (!data) {
-      return Response.json({ valid: false });
-    }
-    
-    return Response.json({ valid: true });
+
+    const valid = await hasValidSecretSession(request, env);
+    return jsonNoStore({ valid }, valid ? 200 : 401);
   } catch (e) {
-    return Response.json({ error: e.message }, { status: 500 });
+    return jsonNoStore({ valid: false, error: 'Session check failed' }, 500);
   }
 }

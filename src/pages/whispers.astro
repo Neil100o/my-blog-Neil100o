@@ -2,121 +2,118 @@
 import Layout from '../layouts/BlogPost.astro';
 ---
 
-<Layout title="秘密空间">
-  <!-- 有权限：显示内容 -->
-  <main id="collection-main" style="max-width:960px;margin:0 auto;padding:2rem 1rem; display:none;">
+<Layout
+  title="秘密空间"
+  description="需要秘钥才能访问"
+  showComments={false}
+  noindex={true}
+>
+  <main id="collection-main" style="max-width:960px;margin:0 auto;padding:2rem 1rem;display:none;">
     <h1 style="border-bottom:3px solid #cc0000;padding-bottom:0.5rem;margin-bottom:1rem;">秘密空间</h1>
-    <p style="color:#666;margin-bottom:2rem;font-style:italic;">"嘘，别乱说哦"</p>
-    
+    <p style="color:#666;margin-bottom:2rem;font-style:italic;">“嘘，别乱说哦”</p>
+
     <div id="posts-loading" style="color:#999;">加载中...</div>
     <ul id="posts-container" style="display:flex;flex-wrap:wrap;gap:2rem;list-style:none;margin:0;padding:0;"></ul>
-    
+
     <div style="margin-top:3rem;text-align:center;">
       <a href="/" style="display:inline-block;padding:0.6rem 1.5rem;background:#000;color:#fff;border:2px solid #000;font-weight:700;text-decoration:none;">← 返回地面</a>
     </div>
   </main>
-  
-  <!-- 无权限：止步 -->
-  <div id="collection-blocked" style="max-width:600px;margin:4rem auto;padding:2rem 1rem;text-align:center; display:none;">
+
+  <div id="collection-blocked" style="max-width:600px;margin:4rem auto;padding:2rem 1rem;text-align:center;">
     <h1 style="border-bottom:3px solid #cc0000;padding-bottom:0.5rem;margin-bottom:1.5rem;">止步</h1>
     <p style="color:#666;margin-bottom:2rem;">此路不通。</p>
     <a href="/" style="display:inline-block;padding:0.6rem 1.5rem;background:#000;color:#fff;border:2px solid #000;font-weight:700;text-decoration:none;">← 返回首页</a>
   </div>
 </Layout>
 
+<script src="/js/secret-space.js" defer></script>
 <script is:inline>
-(function() {
-  var SECRET_KEY = 'sk_';
-  
-  function getKey() {
-    return sessionStorage.getItem(SECRET_KEY) || localStorage.getItem(SECRET_KEY);
-  }
-  
-  function showMain() {
-    return sessionStorage.getItem(SECRET_KEY) || localStorage.getItem(SECRET_KEY);
-  }
-  
-  function saveKey(key) {
-    sessionStorage.setItem(SECRET_KEY, key);
-    localStorage.setItem(SECRET_KEY, key);
-  }
-  
-  function showMain() {
-    document.getElementById('collection-main').style.display = 'block';
-    document.getElementById('collection-blocked').style.display = 'none';
-  }
-  
+document.addEventListener('DOMContentLoaded', function() {
+  var main = document.getElementById('collection-main');
+  var blocked = document.getElementById('collection-blocked');
+  var loading = document.getElementById('posts-loading');
+  var container = document.getElementById('posts-container');
+
   function showBlocked() {
-    document.getElementById('collection-main').style.display = 'none';
-    document.getElementById('collection-blocked').style.display = 'block';
+    main.style.display = 'none';
+    blocked.style.display = 'block';
   }
-  
+
+  function showMain() {
+    blocked.style.display = 'none';
+    main.style.display = 'block';
+  }
+
   function renderPosts(posts) {
-    var container = document.getElementById('posts-container');
-    var loading = document.getElementById('posts-loading');
     loading.style.display = 'none';
-    
+    container.replaceChildren();
+
     if (!posts || !posts.length) {
-      container.innerHTML = '<p style="color:#999;">这里还没有秘密...</p>';
+      var empty = document.createElement('p');
+      empty.style.color = '#999';
+      empty.textContent = '这里还没有秘密...';
+      container.appendChild(empty);
       return;
     }
-    
-    var html = '';
-    for (var i = 0; i < posts.length; i++) {
-      var post = posts[i];
-      var width = i === 0 ? '100%' : 'calc(50% - 1rem)';
-      var titleSize = i === 0 ? '2.369rem' : '1.2rem';
-      var imgStyle = i === 0 ? 'max-height:400px;object-fit:cover;' : '';
-      
-      html += '<li style="width: ' + width + '; margin-bottom: 1rem;">';
-      html += '<a href="/whispers/' + post.id + '/" style="display:block;text-decoration:none;color:#000;">';
-      if (post.heroImage) {
-        html += '<img src="' + post.heroImage + '" alt="" style="width:100%;border-radius:12px;margin-bottom:0.5rem;' + imgStyle + '" />';
+
+    posts.forEach(function(post, index) {
+      var item = document.createElement('li');
+      item.style.width = index === 0 ? '100%' : 'calc(50% - 1rem)';
+      item.style.marginBottom = '1rem';
+
+      var link = document.createElement('a');
+      link.href = '/whispers/' + encodeURIComponent(post.id) + '/';
+      link.style.cssText = 'display:block;text-decoration:none;color:#000;';
+
+      var imageUrl = window.SecretSpace.safeUrl(post.heroImage);
+      if (imageUrl) {
+        var image = document.createElement('img');
+        image.src = imageUrl;
+        image.alt = '';
+        image.loading = 'lazy';
+        image.style.cssText = 'width:100%;border-radius:12px;margin-bottom:0.5rem;object-fit:cover;';
+        if (index === 0) image.style.maxHeight = '400px';
+        link.appendChild(image);
       }
-      html += '<h4 style="margin:0;font-size:' + titleSize + ';line-height:1;">' + (post.title || post.id) + '</h4>';
+
+      var title = document.createElement('h4');
+      title.style.cssText = 'margin:0;line-height:1;';
+      title.style.fontSize = index === 0 ? '2.369rem' : '1.2rem';
+      title.textContent = post.title || post.id;
+      link.appendChild(title);
+
       if (post.pubDate) {
-        html += '<p style="margin:0.3rem 0 0;color:rgb(var(--gray));">' + new Date(post.pubDate).toLocaleDateString('zh-CN') + '</p>';
+        var date = document.createElement('p');
+        date.style.cssText = 'margin:0.3rem 0 0;color:rgb(var(--gray));';
+        date.textContent = new Date(post.pubDate).toLocaleDateString('zh-CN');
+        link.appendChild(date);
       }
+
       if (post.tags && post.tags.length) {
-        html += '<div style="margin-top:0.5rem;display:flex;gap:0.4rem;flex-wrap:wrap;">';
-        for (var j = 0; j < post.tags.length; j++) {
-          html += '<span style="display:inline-block;padding:0.15rem 0.5rem;border:1px solid #000;color:#000;font-size:0.75rem;font-weight:600;">' + post.tags[j] + '</span>';
-        }
-        html += '</div>';
+        var tags = document.createElement('div');
+        tags.style.cssText = 'margin-top:0.5rem;display:flex;gap:0.4rem;flex-wrap:wrap;';
+        post.tags.forEach(function(tagText) {
+          var tag = document.createElement('span');
+          tag.style.cssText = 'display:inline-block;padding:0.15rem 0.5rem;border:1px solid #000;color:#000;font-size:0.75rem;font-weight:600;';
+          tag.textContent = tagText;
+          tags.appendChild(tag);
+        });
+        link.appendChild(tags);
       }
-      html += '</a></li>';
-    }
-    container.innerHTML = html;
+
+      item.appendChild(link);
+      container.appendChild(item);
+    });
   }
-  
-  // 主逻辑
-  var key = getKey();
-  var key = getKey();
-  console.log('collection page - key:', key ? 'exists' : 'missing');
-  
-  if (!key) {
-    showBlocked();
-  } else {
-    loadPosts(key);
-  }
-  
-  function loadPosts(key) {
-    showMain();
-    fetch('/api/secret-posts?key=' + encodeURIComponent(key))
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        if (data.error) {
-          // 秘钥无效，清除
-          sessionStorage.removeItem(SECRET_KEY);
-          localStorage.removeItem(SECRET_KEY);
-          showBlocked();
-          return;
-        }
-        renderPosts(data.posts);
-      })
-      .catch(function() {
-        document.getElementById('posts-loading').textContent = '加载失败';
-      });
-  }
-})();
+
+  window.SecretSpace.fetchJson('/api/secret-check')
+    .then(function(data) {
+      if (!data.valid) throw new Error('Unauthorized');
+      showMain();
+      return window.SecretSpace.fetchJson('/api/secret-posts');
+    })
+    .then(function(data) { renderPosts(data.posts); })
+    .catch(function() { showBlocked(); });
+});
 </script>

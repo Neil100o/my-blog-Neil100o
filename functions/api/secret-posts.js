@@ -1,28 +1,21 @@
+import { hasValidSecretSession, jsonNoStore } from '../_shared/secret-auth.js';
+
+const REPOSITORY = 'Neil100o/my-blog-Neil100o';
+
 export async function onRequest(context) {
   try {
     const { request, env } = context;
-    const url = new URL(request.url);
-    const key = url.searchParams.get('key');
-    
-    if (!key) {
-      return Response.json({ error: 'Missing key' }, { status: 400 });
-    }
-    
     if (!env.SECRET_KV) {
-      return Response.json({ error: 'KV not bound' }, { status: 500 });
+      return jsonNoStore({ error: 'Secret storage unavailable' }, 500);
     }
-    
-    // 验证秘钥
-    const keyData = await env.SECRET_KV.get(key);
-    if (!keyData) {
-      return Response.json({ error: 'Invalid key' }, { status: 403 });
+
+    if (!(await hasValidSecretSession(request, env))) {
+      return jsonNoStore({ error: 'Unauthorized' }, 401);
     }
     
     // 从 GitHub API 读取 hidden 目录下的文章列表
     // 需要 GITHUB_TOKEN 来访问私有内容，或者仓库是公开的
     const githubToken = env.GITHUB_TOKEN || '';
-    const repo = 'Neil100o/my-blog-Neil100o';
-    
     const headers = {
       'Accept': 'application/vnd.github.v3+json',
       'User-Agent': 'blog-secret-api'
@@ -32,17 +25,17 @@ export async function onRequest(context) {
     }
     
     const ghRes = await fetch(
-      'https://api.github.com/repos/' + repo + '/contents/src/content/hidden',
+      'https://api.github.com/repos/' + REPOSITORY + '/contents/src/content/hidden',
       { headers }
     );
     
     if (!ghRes.ok) {
-      return Response.json({ error: 'Failed to fetch posts' }, { status: 500 });
+      return jsonNoStore({ error: 'Failed to fetch posts' }, 502);
     }
     
     const files = await ghRes.json();
     if (!Array.isArray(files)) {
-      return Response.json({ posts: [] });
+      return jsonNoStore({ posts: [] });
     }
     
     // 解析每篇文章的 frontmatter（需要下载文件内容）
@@ -53,7 +46,10 @@ export async function onRequest(context) {
         const id = file.name.replace('.md', '');
         // 尝试获取 frontmatter
         try {
-          const contentRes = await fetch(file.download_url);
+          const contentRes = await fetch(file.url, {
+            headers: { ...headers, Accept: 'application/vnd.github.raw+json' }
+          });
+          if (!contentRes.ok) throw new Error('Failed to fetch metadata');
           const content = await contentRes.text();
           // 简单解析 frontmatter
           const fm = {};
@@ -79,7 +75,7 @@ export async function onRequest(context) {
             pubDate: fm.pubDate || '',
             heroImage: fm.heroImage || '',
             description: fm.description || '',
-            tags: fm.tags ? fm.tags.split(',').map(function(t) { return t.trim(); }) : []
+            tags: parseTags(fm.tags)
           });
         } catch (e) {
           posts.push({ id: id, title: id });
@@ -92,8 +88,17 @@ export async function onRequest(context) {
       return new Date(b.pubDate || 0).valueOf() - new Date(a.pubDate || 0).valueOf();
     });
     
-    return Response.json({ posts });
+    return jsonNoStore({ posts });
   } catch (e) {
-    return Response.json({ error: e.message }, { status: 500 });
+    return jsonNoStore({ error: 'Failed to load posts' }, 500);
   }
+}
+
+function parseTags(value) {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    if (Array.isArray(parsed)) return parsed.map(String);
+  } catch (e) {}
+  return value.split(',').map(tag => tag.trim()).filter(Boolean);
 }

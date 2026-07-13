@@ -24,6 +24,7 @@
   var petClickCount = 0;
   var pageDialogue = [];
   var pageDialogueIndex = 0;
+  var travelTarget = null;
 
   // 指定页面可以通过 meta 配置独有的小人台词。
   var dialogueMeta = document.querySelector('meta[name="pet-dialogue"]');
@@ -73,7 +74,11 @@
   
   // 添加旋转动画样式
   var style = document.createElement('style');
-  style.textContent = '@keyframes pet-spin { to { transform: rotate(360deg); } }';
+  style.textContent = '@keyframes pet-spin { to { transform: rotate(360deg); } }' +
+    '[data-pet-note]{cursor:pointer;text-decoration-line:underline;text-decoration-style:dashed;text-decoration-color:#cc0000;text-underline-offset:0.18em;transition:color 160ms ease,text-decoration-color 160ms ease;}' +
+    '[data-pet-note]:hover,[data-pet-note]:focus-visible{color:#cc0000;text-decoration-color:#000;}' +
+    'button[data-pet-note]{font:inherit;color:inherit;background:none;border:0;padding:0;}' +
+    'button[data-pet-note]:focus-visible{outline:2px solid #cc0000;outline-offset:3px;}';
   document.head.appendChild(style);
   
   initPosition();
@@ -288,28 +293,48 @@
   
   // 移动动画
   function move() {
-    if (!isMoving || modalOpen) {
+    if ((!isMoving && !travelTarget) || modalOpen) {
       requestAnimationFrame(move);
       return;
     }
-    
-    x += vx;
-    y += vy;
-    
+
     var w = window.innerWidth;
     var h = window.innerHeight;
-    
-    // 边界反弹
-    if (x <= EDGE_MARGIN) { x = EDGE_MARGIN; vx = Math.abs(vx); }
-    if (x >= w - PET_WIDTH - EDGE_MARGIN) { x = w - PET_WIDTH - EDGE_MARGIN; vx = -Math.abs(vx); }
-    if (y <= EDGE_MARGIN) { y = EDGE_MARGIN; vy = Math.abs(vy); }
-    if (y >= h - PET_HEIGHT - EDGE_MARGIN) { y = h - PET_HEIGHT - EDGE_MARGIN; vy = -Math.abs(vy); }
-    
-    // 偶尔随机变向
-    if (Math.random() < 0.002) {
-      var s = randomSpeed();
-      vx = s.x;
-      vy = s.y;
+    var arrivedNote = null;
+
+    if (travelTarget) {
+      var dx = travelTarget.x - x;
+      var dy = travelTarget.y - y;
+      var distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance <= travelTarget.speed) {
+        x = travelTarget.x;
+        y = travelTarget.y;
+        arrivedNote = travelTarget;
+        travelTarget = null;
+        isMoving = false;
+      } else {
+        vx = dx / distance * travelTarget.speed;
+        vy = dy / distance * travelTarget.speed;
+        x += vx;
+        y += vy;
+      }
+    } else {
+      x += vx;
+      y += vy;
+
+      // 边界反弹
+      if (x <= EDGE_MARGIN) { x = EDGE_MARGIN; vx = Math.abs(vx); }
+      if (x >= w - PET_WIDTH - EDGE_MARGIN) { x = w - PET_WIDTH - EDGE_MARGIN; vx = -Math.abs(vx); }
+      if (y <= EDGE_MARGIN) { y = EDGE_MARGIN; vy = Math.abs(vy); }
+      if (y >= h - PET_HEIGHT - EDGE_MARGIN) { y = h - PET_HEIGHT - EDGE_MARGIN; vy = -Math.abs(vy); }
+
+      // 偶尔随机变向
+      if (Math.random() < 0.002) {
+        var s = randomSpeed();
+        vx = s.x;
+        vy = s.y;
+      }
     }
     
     wrapper.style.left = x + 'px';
@@ -324,6 +349,12 @@
       if (content && content.tagName !== 'CANVAS') {
         content.style.transform = vx > 0 ? 'scaleX(1)' : 'scaleX(-1)';
       }
+    }
+
+    if (arrivedNote) {
+      setAnimation('wait', true, true);
+      showPetHint(arrivedNote.text, arrivedNote.duration);
+      resumeRoaming(arrivedNote.duration - 150);
     }
     
     requestAnimationFrame(move);
@@ -382,6 +413,7 @@
 
   function pauseRoaming() {
     isMoving = false;
+    travelTarget = null;
     if (stopTimer) clearTimeout(stopTimer);
     if (moveTimer) clearTimeout(moveTimer);
     if (interactionTimer) clearTimeout(interactionTimer);
@@ -400,6 +432,52 @@
       scheduleNextStop();
     }, delay || 0);
   }
+
+  function clamp(value, min, max) {
+    return Math.min(max, Math.max(min, value));
+  }
+
+  // 点击带 data-pet-note 的文字后，让小人走到文字附近再说话。
+  function summonPetToNote(trigger) {
+    if (modalOpen) return;
+
+    var noteText = (trigger.getAttribute('data-pet-note') || '').trim();
+    if (!noteText) return;
+
+    var rect = trigger.getBoundingClientRect();
+    var targetX = rect.left + rect.width / 2 - PET_WIDTH / 2;
+    var targetY = rect.top - PET_HEIGHT * 0.7;
+    if (targetY < 8) targetY = rect.bottom - PET_HEIGHT * 0.65;
+    targetX = clamp(targetX, 8, Math.max(8, window.innerWidth - PET_WIDTH - 8));
+    targetY = clamp(targetY, 8, Math.max(8, window.innerHeight - PET_HEIGHT - 8));
+
+    pauseRoaming();
+    petClickCount = 0;
+    if (clickResetTimer) clearTimeout(clickResetTimer);
+    if (hintTimer) clearTimeout(hintTimer);
+    petHint.style.opacity = '0';
+
+    var dx = targetX - x;
+    var dy = targetY - y;
+    var distance = Math.sqrt(dx * dx + dy * dy);
+    travelTarget = {
+      x: targetX,
+      y: targetY,
+      text: noteText,
+      duration: Math.min(9000, Math.max(5200, 1200 + noteText.length * 135)),
+      speed: Math.min(5.5, Math.max(1.8, distance / 120))
+    };
+    isMoving = true;
+    setAnimation('move', true, true);
+  }
+
+  var noteTriggers = document.querySelectorAll('[data-pet-note]');
+  for (var noteIndex = 0; noteIndex < noteTriggers.length; noteIndex += 1) {
+    noteTriggers[noteIndex].addEventListener('click', function(e) {
+      e.stopPropagation();
+      summonPetToNote(e.currentTarget);
+    });
+  }
   
   // 连续点击三次后，从小人位置放出秘密入口
   hitArea.addEventListener('click', function(e) {
@@ -411,10 +489,8 @@
       var dialogueLine = pageDialogue[pageDialogueIndex];
       pageDialogueIndex += 1;
       var dialogueDuration = Math.min(5200, Math.max(2200, 900 + dialogueLine.length * 120));
-      var dialogueAnimation = pageDialogueIndex % 2 === 0 ? 'pick' : 'wait';
-
       pauseRoaming();
-      setAnimation(dialogueAnimation, dialogueAnimation === 'wait', true);
+      setAnimation('wait', true, true);
       showPetHint(dialogueLine, dialogueDuration);
       resumeRoaming(dialogueDuration - 150);
       return;
@@ -436,7 +512,7 @@
     }
 
     if (petClickCount === 2) {
-      setAnimation('pick', false, true);
+      setAnimation('wait', true, true);
       showPetHint('再点一次');
       resumeRoaming(1350);
       return;
@@ -445,7 +521,7 @@
     petClickCount = 0;
     if (clickResetTimer) clearTimeout(clickResetTimer);
     modalOpen = true;
-    setAnimation('pick', false, true);
+    setAnimation('wait', true, true);
     showPetHint('入口已找到');
 
     var petRect = wrapper.getBoundingClientRect();
@@ -508,14 +584,15 @@
       
       fetch('/api/secret-unlock', {
         method: 'POST',
+        credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: pwd })
       })
       .then(function(r) { return r.json(); })
       .then(function(data) {
-        if (data.key) {
-          sessionStorage.setItem('sk_', data.key);
-          localStorage.setItem('sk_', data.key);
+        if (data.success) {
+          sessionStorage.removeItem('sk_');
+          localStorage.removeItem('sk_');
           location.href = '/whispers/';
         } else {
           submitBtn.disabled = false;

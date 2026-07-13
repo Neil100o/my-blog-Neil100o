@@ -1,87 +1,87 @@
 ---
+import { readdir } from 'node:fs/promises';
+import Comments from '../../components/Comments.astro';
 import Layout from '../../layouts/BlogPost.astro';
 
-// 告诉 Astro 需要为哪些 slug 生成静态页面
 export async function getStaticPaths() {
-  const modules = import.meta.glob('../../content/hidden/**/*.md', { eager: true });
-  
-  return Object.entries(modules).map(([filePath, mod]) => {
-    const slug = filePath.replace(/.*\/hidden\/(.*)\.md$/, '$1');
-    return {
-      params: { slug },
-      props: { frontmatter: mod.frontmatter }
-    };
+  const entries = await readdir('./src/content/hidden', {
+    withFileTypes: true,
   });
+
+  return entries
+    .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
+    .map((entry) => ({
+      params: { slug: entry.name.slice(0, -3) },
+    }));
 }
 
-const { slug } = Astro.params;
-const { frontmatter } = Astro.props;
-
-// 再次获取对应的 Content 组件
-const modules = import.meta.glob('../../content/hidden/**/*.md', { eager: true });
-let PostContent = null;
-for (const [filePath, mod] of Object.entries(modules)) {
-  const id = filePath.replace(/.*\/hidden\/(.*)\.md$/, '$1');
-  if (id === slug) {
-    PostContent = mod.default;
-    break;
-  }
-}
+const { slug = '' } = Astro.params;
 ---
 
-<Layout title={frontmatter.title} description={frontmatter.description}>
-  <!-- 有权限：显示内容 -->
-  <div id="whispers-content" style="max-width: 800px; margin: 0 auto; padding: 2rem 1rem; display: none;">
-    {frontmatter.heroImage && (
-      <img src={frontmatter.heroImage} alt="" style="width: 100%; border-radius: 12px; margin-bottom: 1.5rem;" />
-    )}
-    <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">{frontmatter.title}</h1>
-    <p style="color: #666; margin-bottom: 2rem;">
-      {frontmatter.pubDate && new Date(frontmatter.pubDate).toLocaleDateString('zh-CN')}
-    </p>
-    <div style="line-height: 1.8; font-size: 1.1rem;">
-      {PostContent ? <PostContent /> : <p>内容加载失败</p>}
+<Layout
+  title="秘密文章"
+  description="需要秘钥才能访问"
+  showComments={false}
+  noindex={true}
+>
+  <div id="whispers-content" style="max-width:800px;margin:0 auto;padding:2rem 1rem;display:none;">
+    <img id="secret-hero" src="" alt="" style="width:100%;border-radius:12px;margin-bottom:1.5rem;display:none;" />
+    <h1 id="secret-title" style="font-size:2.5rem;margin-bottom:0.5rem;"></h1>
+    <p id="secret-date" style="color:#666;margin-bottom:2rem;"></p>
+    <div id="secret-body" style="line-height:1.8;font-size:1.1rem;"></div>
+
+    <div style="margin-top:3rem;text-align:center;">
+      <a href="/whispers" style="display:inline-block;padding:0.6rem 1.5rem;background:#000;color:#fff;text-decoration:none;font-weight:700;">← 返回秘密空间</a>
     </div>
-    <div style="margin-top: 3rem; text-align: center;">
-      <a href="/whispers" style="display: inline-block; padding: 0.6rem 1.5rem; background: #000; color: #fff; text-decoration: none; font-weight: 700;">← 返回秘密空间</a>
+
+    <div id="secret-comments">
+      <hr style="margin:3rem 0;" />
+      <Comments />
     </div>
   </div>
 
-  <!-- 无权限：止步 -->
-  <div id="whispers-blocked" style="max-width:600px;margin:4rem auto;padding:2rem 1rem;text-align:center; display:none;">
+  <div id="whispers-blocked" style="max-width:600px;margin:4rem auto;padding:2rem 1rem;text-align:center;">
     <h1 style="border-bottom:3px solid #cc0000;padding-bottom:0.5rem;margin-bottom:1.5rem;">止步</h1>
     <p style="color:#666;margin-bottom:2rem;">此路不通。</p>
     <a href="/" style="display:inline-block;padding:0.6rem 1.5rem;background:#000;color:#fff;border:2px solid #000;font-weight:700;text-decoration:none;">← 返回首页</a>
   </div>
 </Layout>
 
-<script is:inline>
-(function() {
-  var SECRET_KEY = 'sk_';
-  var key = sessionStorage.getItem(SECRET_KEY) || localStorage.getItem(SECRET_KEY);
-  
-  if (!key) {
-    document.getElementById('whispers-content').style.display = 'none';
-    document.getElementById('whispers-blocked').style.display = 'block';
-  } else {
-    // 验证 key 是否有效
-    fetch('/api/secret-check?key=' + encodeURIComponent(key))
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        if (data.valid) {
-          document.getElementById('whispers-content').style.display = 'block';
-          document.getElementById('whispers-blocked').style.display = 'none';
-        } else {
-          sessionStorage.removeItem(SECRET_KEY);
-          localStorage.removeItem(SECRET_KEY);
-          document.getElementById('whispers-content').style.display = 'none';
-          document.getElementById('whispers-blocked').style.display = 'block';
-        }
-      })
-      .catch(function() {
-        document.getElementById('whispers-content').style.display = 'none';
-        document.getElementById('whispers-blocked').style.display = 'block';
-      });
+<script src="/js/secret-space.js" defer></script>
+<script src="/js/comments.js" defer></script>
+<script is:inline define:vars={{ slug }}>
+document.addEventListener('DOMContentLoaded', function() {
+  var content = document.getElementById('whispers-content');
+  var blocked = document.getElementById('whispers-blocked');
+  var title = document.getElementById('secret-title');
+  var date = document.getElementById('secret-date');
+  var body = document.getElementById('secret-body');
+  var hero = document.getElementById('secret-hero');
+
+  function showBlocked() {
+    content.style.display = 'none';
+    blocked.style.display = 'block';
   }
-})();
+
+  window.SecretSpace.fetchJson('/api/secret-post?slug=' + encodeURIComponent(slug))
+    .then(function(data) {
+      var post = data.post;
+      if (!post) throw new Error('Article missing');
+
+      title.textContent = post.title || '秘密文章';
+      document.title = (post.title || '秘密文章') + ' | Mo Blog';
+      date.textContent = post.pubDate ? new Date(post.pubDate).toLocaleDateString('zh-CN') : '';
+      body.innerHTML = window.SecretSpace.renderMarkdown(post.markdown || '');
+
+      var heroUrl = window.SecretSpace.safeUrl(post.heroImage);
+      if (heroUrl) {
+        hero.src = heroUrl;
+        hero.style.display = 'block';
+      }
+
+      blocked.style.display = 'none';
+      content.style.display = 'block';
+    })
+    .catch(function() { showBlocked(); });
+});
 </script>
