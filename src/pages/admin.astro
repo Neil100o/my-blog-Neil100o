@@ -99,12 +99,37 @@ import Layout from '../layouts/BlogPost.astro';
     var authBtn = document.getElementById('auth-btn');
     var adminPwdInput = document.getElementById('admin-pwd');
 
-    var storedPwd = sessionStorage.getItem('adminPwd');
-    if (storedPwd) {
+    function showAdmin(pwd) {
+      sessionStorage.setItem('adminPwd', pwd);
+      adminPwdInput.value = pwd;
       overlay.style.display = 'none';
       main.style.display = 'block';
-      adminPwdInput.value = storedPwd;
-      return;
+    }
+
+    function verifyAdminPassword(pwd) {
+      return fetch('/api/verify-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pwd })
+      })
+      .then(function(response) {
+        return response.json().catch(function() { return {}; }).then(function(data) {
+          if (!response.ok) throw new Error(data.error || '管理员密码错误');
+          return data;
+        });
+      });
+    }
+
+    function showLogin(error) {
+      sessionStorage.removeItem('adminPwd');
+      adminPwdInput.value = '';
+      main.style.display = 'none';
+      overlay.style.display = 'flex';
+      if (error) alert(error.message || '管理员密码错误');
+      authPwd.value = '';
+      authBtn.disabled = false;
+      authBtn.textContent = '进入';
+      authPwd.focus();
     }
 
     function doAuth() {
@@ -112,27 +137,11 @@ import Layout from '../layouts/BlogPost.astro';
       if (!pwd) { alert('请输入密码'); return; }
       authBtn.disabled = true;
       authBtn.textContent = '验证中...';
-      fetch('/api/verify-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: pwd })
-      })
-      .then(function(r) {
-        if (!r.ok) throw new Error('密码错误');
-        return r.json();
-      })
-      .then(function() {
-        sessionStorage.setItem('adminPwd', pwd);
-        adminPwdInput.value = pwd;
-        overlay.style.display = 'none';
-        main.style.display = 'block';
-      })
-      .catch(function() {
-        alert('密码错误');
+      verifyAdminPassword(pwd)
+      .then(function() { showAdmin(pwd); })
+      .catch(function(error) {
+        showLogin(error);
         authPwd.value = '';
-        authPwd.focus();
-        authBtn.disabled = false;
-        authBtn.textContent = '进入';
       });
     }
 
@@ -140,7 +149,16 @@ import Layout from '../layouts/BlogPost.astro';
     authPwd.addEventListener('keydown', function(e) {
       if (e.key === 'Enter') doAuth();
     });
-    authPwd.focus();
+    var storedPwd = sessionStorage.getItem('adminPwd');
+    if (storedPwd) {
+      authBtn.disabled = true;
+      authBtn.textContent = '验证中...';
+      verifyAdminPassword(storedPwd)
+        .then(function() { showAdmin(storedPwd); })
+        .catch(showLogin);
+    } else {
+      authPwd.focus();
+    }
   })();
 
   function updatePublishTime() {
@@ -152,6 +170,10 @@ import Layout from '../layouts/BlogPost.astro';
 
   var textarea = document.getElementById('content');
   var pwdInput = document.getElementById('admin-pwd');
+
+  function getAdminPassword() {
+    return sessionStorage.getItem('adminPwd') || '';
+  }
   
   // Tab 键支持
   textarea.addEventListener('keydown', function(e) {
@@ -238,8 +260,9 @@ import Layout from '../layouts/BlogPost.astro';
   imageInput.addEventListener('change', async function() {
     var files = imageInput.files;
     if (!files.length) return;
-    if (!pwdInput.value) {
-      uploadStatus.textContent = '错误：先填写发布密码';
+    var adminPassword = getAdminPassword();
+    if (!adminPassword) {
+      uploadStatus.textContent = '错误：管理员凭据缺失，请刷新页面重新登录';
       uploadStatus.style.color = '#cc0000';
       return;
     }
@@ -270,11 +293,17 @@ import Layout from '../layouts/BlogPost.astro';
           body: JSON.stringify({
             filename: file.name.replace(/\.[^/.]+$/, '') + '.jpg',
             content: base64,
-            password: pwdInput.value
+            password: adminPassword
           })
         });
 
         var data = await res.json();
+        if (res.status === 401 || res.status === 403) {
+          sessionStorage.removeItem('adminPwd');
+          uploadStatus.textContent = '错误：管理员凭据已失效，请刷新页面重新登录';
+          uploadStatus.style.color = '#cc0000';
+          break;
+        }
         if (!data.success) {
           uploadStatus.textContent = '错误：' + file.name + ' 失败：' + (data.error || '未知错误');
           uploadStatus.style.color = '#cc0000';
@@ -325,7 +354,7 @@ import Layout from '../layouts/BlogPost.astro';
     var date = document.getElementById('date').value;
     var tags = document.getElementById('tags').value.split(',').map(function(t){ return t.trim(); }).filter(function(t){ return t; });
     var content = textarea.value;
-    var password = pwdInput.value;
+    var password = getAdminPassword();
     var heroImage = document.getElementById('heroImage').value.trim();
     
     if (!slug.endsWith('.md')) slug += '.md';
